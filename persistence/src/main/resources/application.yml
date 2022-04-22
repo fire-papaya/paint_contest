@@ -1,0 +1,6 @@
+#spring:
+#  datasource:
+#    driver-class-name: org.mariadb.jdbc.Driver
+#    url: jdbc:mariadb://localhost:3310/paint_contest
+#    username: root
+#    password:

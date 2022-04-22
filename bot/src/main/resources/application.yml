@@ -1,0 +1,12 @@
+tg:
+  bot:
+    token: token
+    username: username
+    creator: 123456789
+
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3310/paint_contest
+    username: root
+    password:

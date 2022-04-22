@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+
+  contest_db:
+    image: bitnami/mariadb:10.5.12
+    ports:
+      - "3310:3310"
+    environment:
+      - MARIADB_AUTHENTICATION_PLUGIN=mysql_native_password
+      - MARIADB_DATABASE=paint_contest
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_PORT_NUMBER=3310
