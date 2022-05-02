@@ -18,3 +18,8 @@ jobs:
       - name: Run build with Gradle wrapper
         id: gradle
         run: ./gradlew bootJar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: build/libs

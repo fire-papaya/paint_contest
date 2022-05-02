@@ -10,7 +10,7 @@ plugins {
 
 group = "uz.warcom.contest"
 version = "0.0.2"
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_11
 val mapstructVersion = "1.5.0.RC1"
 
 configurations {
@@ -40,7 +40,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
 }
 
