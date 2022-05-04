@@ -30,13 +30,13 @@ jobs:
 #          path: build/libs/bot-([0-9]+\.)+jar
       - name: List files
         run: ls bot/build/libs
-#      - name: Copying files to server
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.REMOTE_HOST }}
-#          username: ${{ secrets.REMOTE_USER }}
-#          key: ${{ secrets.SSH_KEY }}
-#          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-#          rm: true
-#          source: "bot/build/libs/bot-0.0.2.jar"
-#          target: "${{ secrets.REMOTE_DIR }}"
+      - name: Copying files to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          rm: true
+          source: "bot/build/libs/bot-0.0.2.jar"
+          target: "${{ secrets.REMOTE_DIR }}"
