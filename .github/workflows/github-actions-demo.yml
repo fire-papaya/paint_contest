@@ -28,7 +28,7 @@ jobs:
 #        with:
 #          name: Package
 #          path: build/libs/bot-([0-9]+\.)+jar
-#      - name: Copying files to server
+      - name: Copying files to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
