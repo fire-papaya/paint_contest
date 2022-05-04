@@ -34,5 +34,5 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
           rm: true
-          source: "bot/build/libs/bot-([0-9]+\.)+jar"
+          source: "bot/build/libs/bot-0.0.2.jar"
           target: "${{ secrets.REMOTE_DIR }}"
