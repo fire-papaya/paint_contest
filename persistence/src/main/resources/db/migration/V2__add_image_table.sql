@@ -4,7 +4,7 @@ create table image (
     entry_id int not null,
     is_ready bit(1) default b'0' not null,
     date_created timestamp default now(),
-    date_updated timestamp default null on update now(),
+    date_updated timestamp null default null on update now(),
     constraint contest_pk
         primary key (id),
     constraint image_entry_id_fk

@@ -5,7 +5,7 @@ create table user
     telegram_id bigint                not null,
     username    varchar(100) not null,
     date_created timestamp default now(),
-    date_updated timestamp default null on update now(),
+    date_updated timestamp null default null on update now(),
     constraint user_pk
         primary key (id)
 );
@@ -26,7 +26,7 @@ create table contest
     start_date timestamp not null,
     end_date timestamp not null,
     date_created timestamp default now(),
-    date_updated timestamp default null on update now(),
+    date_updated timestamp null default null on update now(),
     constraint contest_pk
         primary key (id)
 );
@@ -43,7 +43,7 @@ create table entry
     contest_id int not null,
     user_id int not null,
     date_created timestamp default now(),
-    date_updated timestamp default null on update now(),
+    date_updated timestamp null default null on update now(),
     constraint contest_pk
         primary key (id),
     constraint entry_contest_id_fk
