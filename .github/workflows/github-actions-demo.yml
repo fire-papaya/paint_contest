@@ -31,7 +31,7 @@ jobs:
       - name: List files
         run: ls bot/build/libs
       - name: Copying files to server with scp
-        uses: mdallasanta/ssh-scp-deploy@{version}
+        uses: mdallasanta/ssh-scp-deploy@master
         with:
           local: 'bot/build/libs/bot-0.0.2.jar'
           remote: '${{ secrets.REMOTE_DIR }}'
