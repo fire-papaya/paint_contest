@@ -30,7 +30,7 @@ jobs:
 #          path: build/libs/bot-([0-9]+\.)+jar
       - name: List files
         run: ls bot/build/libs
-      - name: Copying files to server
+      - name: Copying files to server with scp
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
