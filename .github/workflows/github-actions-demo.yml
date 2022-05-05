@@ -31,12 +31,14 @@ jobs:
       - name: List files
         run: ls bot/build/libs
       - name: Copying files to server with scp
-        uses: appleboy/scp-action@master
+        uses: mdallasanta/ssh-scp-deploy@{version}
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
+          local: 'bot/build/libs/bot-0.0.2.jar'
+          remote: '${{ secrets.REMOTE_DIR }}'
+          host: ${{secrets.REMOTE_HOST}}
+          user: ${{secrets.REMOTE_USER}}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          rm: true
-          source: "bot/build/libs/bot-0.0.2.jar"
-          target: "${{ secrets.REMOTE_DIR }}"
+          pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
+          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
+#          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+#          scp_options: -v                                              # Flags to use during scp - REQUIRED false - DEFAULT ''
