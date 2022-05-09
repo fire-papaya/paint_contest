@@ -14,7 +14,7 @@ abstract class AbstractIntEntity {
     var id: Int? = null
 
 
-    @Column(name = "guid", columnDefinition = "binary(36)")
+    @Column(name = "guid", columnDefinition = "binary(16)")
     @Generated(GenerationTime.INSERT)
     var guid: UUID? = null
 }

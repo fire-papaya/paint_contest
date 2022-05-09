@@ -33,7 +33,7 @@ jobs:
       - name: Copying files to server with scp
         uses: mdallasanta/ssh-scp-deploy@acf9c1fefcda34c0b8b0cb0c0c1b521bf130d8b6
         with:
-          local: 'bot/build/libs/bot-0.0.2.jar'
+          local: 'bot/build/libs/'
           remote: '${{ secrets.REMOTE_DIR }}'
           host: ${{secrets.REMOTE_HOST}}
           user: ${{secrets.REMOTE_USER}}

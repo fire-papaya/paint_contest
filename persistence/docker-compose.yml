@@ -10,4 +10,5 @@ services:
       - MARIADB_AUTHENTICATION_PLUGIN=mysql_native_password
       - MARIADB_DATABASE=paint_contest
       - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_SKIP_TEST_DB=yes
       - MARIADB_PORT_NUMBER=3310

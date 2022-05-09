@@ -14,7 +14,7 @@ class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null
 
-    @Column(name = "guid", columnDefinition = "binary(36)")
+    @Column(name = "guid", columnDefinition = "binary(16)")
     var guid: UUID? = null
 
     @ManyToOne

@@ -8,8 +8,6 @@ import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.GetFile
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
-import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
 import uz.warcom.contest.bot.config.BotConfiguration
@@ -17,7 +15,6 @@ import uz.warcom.contest.bot.model.EntryData
 import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enum.Commands
 import uz.warcom.contest.bot.model.enum.UserState
-import uz.warcom.contest.bot.service.CodeService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import java.io.InputStream
@@ -27,7 +24,6 @@ import java.io.InputStream
 class PaintContestBot
 @Autowired constructor(
     private val botConfiguration: BotConfiguration,
-    private val codeService: CodeService,
     private val persistenceFacade: PersistenceFacade
 ): AbilityBot(botConfiguration.token, botConfiguration.username) {
 
@@ -57,8 +53,9 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
-                    val entry = persistenceFacade.getEntry(it.user())
-                    "Твой код: ${entry.code}, используй его при подаче на конкурс"
+                    val entry = persistenceFacade.checkEntry(it.user())
+                    "Твой код: ${entry.code}, используй команду /${Commands.PRIME} для продолжения процесса подачи " +
+                            "работы на конкурс"
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
                 }
@@ -78,7 +75,7 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
-                    val entry = persistenceFacade.getEntry(it.user())
+                    val entry = persistenceFacade.checkEntry(it.user())
                     "Отправь изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}. " +
                             "Если ранее была уже отправлена фотография, то она будет заменена на новую"
                 } catch (e: ContestNotFoundException) {
@@ -100,7 +97,7 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
-                    val entry = persistenceFacade.getEntry(it.user())
+                    val entry = persistenceFacade.checkEntry(it.user())
 
                     if (entry.images.find { img -> !img.isReady } == null)
                         "Сначала загрузи изображение собранной и/или загрунтованной миниатюры, используя команду /${Commands.PRIME}"
@@ -126,9 +123,10 @@ class PaintContestBot
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action {
-                val sendPhoto = SendPhoto()
-                sendPhoto.chatId = it.chatId().toString()
-                sendPhoto.photo = InputFile()
+//                val sendPhoto = SendPhoto()
+//                sendPhoto.chatId = it.chatId().toString()
+//                sendPhoto.photo = InputFile()
+
 
                 silent.send(
                     "Вот твоя работа",
@@ -201,6 +199,7 @@ class PaintContestBot
 
         // We fetch the bigger photo
         // Todo throw proper exception
+        // Todo add square check
         return photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { RuntimeException() }

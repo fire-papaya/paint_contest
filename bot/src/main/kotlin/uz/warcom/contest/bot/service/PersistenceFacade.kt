@@ -32,7 +32,7 @@ class PersistenceFacade
         return userMapStruct.toUserData(checkUser(telegramUser))
     }
 
-    fun getEntry (telegramUser: User): EntryData {
+    fun checkEntry (telegramUser: User): EntryData {
         val user = checkUser(telegramUser)
 
         val entry = entryService.createEntry(user)
@@ -50,7 +50,7 @@ class PersistenceFacade
                 imageToSave.isReady
             ))
 
-        return getEntry(imageToSave.telegramUser)
+        return checkEntry(imageToSave.telegramUser)
     }
 
     fun getCurrentContest (): ContestData {
