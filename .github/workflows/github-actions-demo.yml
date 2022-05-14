@@ -30,26 +30,16 @@ jobs:
 #          path: build/libs/bot-([0-9]+\.)+jar
       - name: List files
         run: ls bot/build/libs
-#      - name: Copying files to server with scp
-#        uses: mdallasanta/ssh-scp-deploy@acf9c1fefcda34c0b8b0cb0c0c1b521bf130d8b6
-#        with:
-#          local: 'bot/build/libs/'
-#          remote: '${{ secrets.REMOTE_DIR }}'
-#          host: ${{secrets.REMOTE_HOST}}
-#          user: ${{secrets.REMOTE_USER}}
-##          password: ${{ secrets.SSH_PASSWORD }}
+      - name: Copying files to server with scp
+        uses: mdallasanta/ssh-scp-deploy@acf9c1fefcda34c0b8b0cb0c0c1b521bf130d8b6
+        with:
+          local: 'bot/build/libs/'
+          remote: '${{ secrets.REMOTE_DIR }}'
+          host: ${{secrets.REMOTE_HOST}}
+          user: ${{secrets.REMOTE_USER}}
+          password: ${{ secrets.SSH_PASSWORD }}
 #          key:  ${{secrets.SSH_KEY}}
-#          pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
-#          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
+          pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
+          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
 ##          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 ##          scp_options: -v                                              # Flags to use during scp - REQUIRED false - DEFAULT ''
-      - name: copy using key
-        uses: srueda99/scp-action@v12
-        with:
-          port: 22
-          host: ${{ secrets.REMOTE_HOST }}
-          origin: "bot/build/libs"
-          destination: "${{ secrets.REMOTE_DIR }}"
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
