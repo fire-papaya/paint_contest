@@ -48,7 +48,7 @@ jobs:
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          private_key: ${{ secrets.SSH_KEY }}
+          private_key: ${{ secrets.SSH_KEY_PUB }}
           scp_source: 'bot/build/libs/'
           scp_target: ${{ secrets.REMOTE_DIR }}
           before_script: |
