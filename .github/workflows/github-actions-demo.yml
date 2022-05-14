@@ -40,6 +40,6 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
 #          key:  ${{secrets.SSH_KEY}}
           pre_upload: echo "This will be executed before the upload!"  # Command to run via ssh before scp upload - REQUIRED false
-          post_upload: echo $(ls -1 ${{ secrets.REMOTE_DIR }} | grep -E ^bot-[0-9]+\.[0-9]+\.[0-9]+\.jar | tail -1) Workspace/bot-new.jar && echo 'this will be executed after the upload!'
+          post_upload: echo $(ls -1 ${{ secrets.REMOTE_DIR }} | grep -E ^bot-[0-9]+\.[0-9]+\.[0-9]+\.jar | tail -1) && echo 'this will be executed after the upload!'
 ##          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 ##          scp_options: -v                                              # Flags to use during scp - REQUIRED false - DEFAULT ''
