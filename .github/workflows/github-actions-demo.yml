@@ -43,13 +43,13 @@ jobs:
 #          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
 ##          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 ##          scp_options: -v                                              # Flags to use during scp - REQUIRED false - DEFAULT ''
-      - name: copy file via ssh password
-        uses: appleboy/scp-action@master
+      - name: copy using key
+        uses: srueda99/scp-action@v12
         with:
+          port: 22
           host: ${{ secrets.REMOTE_HOST }}
+          origin: "bot/build/libs"
+          destination: "${{ secrets.REMOTE_DIR }}"
           username: ${{ secrets.REMOTE_USER }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
           key: ${{ secrets.SSH_KEY }}
-          source: "bot/build/libs/"
-          target: ${{ secrets.REMOTE_DIR }}
-          use_insecure_cipher: true
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
