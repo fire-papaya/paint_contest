@@ -43,15 +43,12 @@ jobs:
 #          post_upload: echo "This will be executed after the upload!"  # Command to run via ssh after scp upload - REQUIRED false
 ##          ssh_options: -o StrictHostKeyChecking=no                     # A set of ssh_option separated by -o - REQUIRED false - DEFAULT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 ##          scp_options: -v                                              # Flags to use during scp - REQUIRED false - DEFAULT ''
-      - name: SSH Server Deploy
-        uses: kostya-ten/ssh-server-deploy@v4
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          private_key: ${{ secrets.SSH_KEY_PUB }}
-          scp_source: 'bot/build/libs/'
-          scp_target: ${{ secrets.REMOTE_DIR }}
-          before_script: |
-            echo "Before script"
-          after_script: |
-            echo "After script"
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          source: "bot/build/libs/"
+          target: "${{ secrets.REMOTE_DIR }}"
