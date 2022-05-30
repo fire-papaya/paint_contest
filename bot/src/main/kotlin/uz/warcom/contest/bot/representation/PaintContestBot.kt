@@ -8,6 +8,7 @@ import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.GetFile
+import org.telegram.telegrambots.meta.api.objects.Document
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
 import uz.warcom.contest.bot.config.BotConfiguration
@@ -18,6 +19,7 @@ import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import java.io.InputStream
+import java.util.function.Predicate
 
 
 @Component
@@ -157,10 +159,10 @@ class PaintContestBot
             .build()
     }
 
-    fun sayNiceToPhoto(): Ability {
+    fun processDocument(): Ability {
         return Ability.builder()
             .name(DEFAULT)
-            .flag(Flag.PHOTO)
+            .flag(Flag.DOCUMENT.or(Flag.PHOTO))
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .input(0)
@@ -217,16 +219,36 @@ class PaintContestBot
         }
     }
 
+    fun getFilePath(document: Document): String {
+        // Todo throw proper exception for file type
+        // Todo add max image size
+        if (document.mimeType != "image/jpeg") {
+            throw RuntimeException("Improper mime type")
+        }
+
+        if (document.fileSize > 3_000_000) {
+            throw RuntimeException("File is too big")
+        }
+
+        val getFileMethod = GetFile()
+        getFileMethod.fileId = document.fileId
+
+        val file = this.execute(getFileMethod)
+        return file.filePath
+    }
+
     fun downloadPhoto(filePath: String): InputStream {
         return this.downloadFileAsStream(filePath)
     }
 
     fun downloadPhoto(update: Update): InputStream {
-        val photoSize = getPhoto(update)
+        val filePath = if (update.message.hasPhoto()) {
+            val photoSize = getPhoto(update)
+            getFilePath(photoSize)
+        } else
+            getFilePath(update.message.document)
 
-        val photoPath = getFilePath(photoSize)
-
-        return downloadPhoto(photoPath)
+        return downloadPhoto(filePath)
     }
 
     private fun updateUserState (userId: Long, state: UserState) {
