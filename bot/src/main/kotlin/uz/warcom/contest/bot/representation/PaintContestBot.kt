@@ -8,10 +8,11 @@ import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.GetFile
-import org.telegram.telegrambots.meta.api.objects.Document
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
 import uz.warcom.contest.bot.config.BotConfiguration
+import uz.warcom.contest.bot.exception.BotException
+import uz.warcom.contest.bot.exception.PhotoShapeException
 import uz.warcom.contest.bot.model.EntryData
 import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enum.Commands
@@ -19,7 +20,6 @@ import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import java.io.InputStream
-import java.util.function.Predicate
 
 
 @Component
@@ -159,7 +159,7 @@ class PaintContestBot
             .build()
     }
 
-    fun processDocument(): Ability {
+    fun processImage(): Ability {
         return Ability.builder()
             .name(DEFAULT)
             .flag(Flag.DOCUMENT.or(Flag.PHOTO))
@@ -170,41 +170,53 @@ class PaintContestBot
                 val state = getUserState(it.user().id)
                 var entry: EntryData?
 
-                if (state == UserState.PRIME || state == UserState.READY) {
-                    downloadPhoto(it.update()).use { ist ->
-                        val bytes = ist.readAllBytes()
+                if (it.update().message.hasDocument()) {
+                    silent.send("Файлы и Документы не поддерживаются, отправь изображение как фотографию", it.chatId())
+                    return@action
+                }
 
-                        entry = persistenceFacade.postPicture(ImageToSave(
-                            it.user(),
-                            bytes,
-                            state == UserState.READY
-                        ))
+
+                try {
+                    if (state == UserState.PRIME || state == UserState.READY) {
+                        downloadPhoto(it.update()).use { ist ->
+                            val bytes = ist.readAllBytes()
+
+                            entry = persistenceFacade.postPicture(ImageToSave(
+                                it.user(),
+                                bytes,
+                                state == UserState.READY
+                            ))
+                        }
+
+                        val message = if (state == UserState.PRIME)
+                            "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
+                        else
+                            "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
+
+                        silent.send(message, it.chatId())
                     }
-
-                    val message = if (state == UserState.PRIME)
-                        "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
-                    else
-                        "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
-
-                    silent.send(
-                        message,
-                        it.chatId()
-                    )
+                } catch (e: BotException) {
+                    silent.send(e.message, it.chatId())
                 }
             }
             .build()
     }
 
-    fun getPhoto(update: Update): PhotoSize {
+    fun checkPhoto(update: Update): PhotoSize {
         // Check that the update contains a message and the message has a photo
+        if (update.message?.hasPhoto() != true )
+            throw IllegalStateException("No photos were found in message")
+
         val photos = update.message.photo
 
-        // We fetch the bigger photo
-        // Todo throw proper exception
-        // Todo add square check
-        return photos.stream()
+        val photo = photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
-            .orElseThrow { RuntimeException() }
+            .orElseThrow { IllegalStateException("No photos were found in photos stream") }
+
+        if (photo.height != photo.width)
+            throw PhotoShapeException()
+
+        return photo
     }
 
     fun getFilePath(photo: PhotoSize): String {
@@ -219,23 +231,23 @@ class PaintContestBot
         }
     }
 
-    fun getFilePath(document: Document): String {
-        // Todo throw proper exception for file type
-        // Todo add max image size
-        if (document.mimeType != "image/jpeg") {
-            throw RuntimeException("Improper mime type")
-        }
-
-        if (document.fileSize > 3_000_000) {
-            throw RuntimeException("File is too big")
-        }
-
-        val getFileMethod = GetFile()
-        getFileMethod.fileId = document.fileId
-
-        val file = this.execute(getFileMethod)
-        return file.filePath
-    }
+//    fun getFilePath(document: Document): String {
+//        // Todo throw proper exception for file type
+//        // Todo add max image size
+//        if (document.mimeType != "image/jpeg") {
+//            throw RuntimeException("Improper mime type")
+//        }
+//
+//        if (document.fileSize > 3_000_000) {
+//            throw RuntimeException("File is too big")
+//        }
+//
+//        val getFileMethod = GetFile()
+//        getFileMethod.fileId = document.fileId
+//
+//        val file = this.execute(getFileMethod)
+//        return file.filePath
+//    }
 
     fun downloadPhoto(filePath: String): InputStream {
         return this.downloadFileAsStream(filePath)
@@ -243,10 +255,10 @@ class PaintContestBot
 
     fun downloadPhoto(update: Update): InputStream {
         val filePath = if (update.message.hasPhoto()) {
-            val photoSize = getPhoto(update)
+            val photoSize = checkPhoto(update)
             getFilePath(photoSize)
-        } else
-            getFilePath(update.message.document)
+        } else throw RuntimeException("No photo received")
+            // getFilePath(update.message.document)
 
         return downloadPhoto(filePath)
     }
