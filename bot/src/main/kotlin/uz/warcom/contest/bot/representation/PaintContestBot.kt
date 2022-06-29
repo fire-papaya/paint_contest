@@ -213,8 +213,8 @@ class PaintContestBot
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { IllegalStateException("No photos were found in photos stream") }
 
-        if (photo.height != photo.width)
-            throw PhotoShapeException()
+//        if (photo.height != photo.width)
+//            throw PhotoShapeException()
 
         return photo
     }
