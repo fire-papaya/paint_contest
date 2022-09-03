@@ -4,20 +4,19 @@ import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Service
 import uz.warcom.contest.persistence.domain.Entry
 import uz.warcom.contest.persistence.domain.Image
-import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.repository.ImageRepository
+import uz.warcom.contest.persistence.util.ImageCropper
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.*
-import javax.annotation.PostConstruct
 import javax.imageio.ImageIO
+
 
 @Service
 class ImageService (
     private val imageRepository: ImageRepository
 ) {
-
     private val baseDir = "pics"
 
     fun addEntryImage (entry: Entry, entryImage: ImageDto) {
@@ -32,18 +31,21 @@ class ImageService (
         imageRepository.save(image)
     }
 
-    fun compileEntryImage (entry: Entry) {
+    fun compileEntryImage (entry: Entry): List<BufferedImage> {
         val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
 
         // Todo proper exception
         val primed = images.lastOrNull { !it.isReady } ?: throw RuntimeException()
 
         // Todo proper exception
-        val painted = images.asReversed().filter { it.isReady }.take(3).takeIf { it.size == 3 } ?: throw RuntimeException()
+//        val painted = images.asReversed().filter { it.isReady }.take(3).takeIf { it.size == 3 } ?: throw RuntimeException()
 
         val primedFile = File("${baseDir}/${entry.contest!!.id}/${entry.id!!}/${primed.guid}.jpg")
 
         val imagePrimed = ImageIO.read(primedFile)
+
+        val croppedPrimed = listOf(ImageCropper.cropSquare(imagePrimed))
+        return croppedPrimed
     }
 
     private fun savePhoto (photo: ByteArray, image: Image) {

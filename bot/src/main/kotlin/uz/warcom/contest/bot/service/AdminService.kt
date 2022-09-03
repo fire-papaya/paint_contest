@@ -1,8 +1,10 @@
 package uz.warcom.contest.bot.service
 
 import org.springframework.stereotype.Service
+import org.telegram.telegrambots.meta.api.objects.User
 import uz.warcom.contest.bot.model.EntriesSummary
 import uz.warcom.contest.bot.model.EntrySummary
+import java.awt.image.BufferedImage
 import kotlin.random.Random
 
 @Service
@@ -24,5 +26,9 @@ class AdminService(
         }
 
         return entriesSummary
+    }
+
+    fun getEntryImage(user: User): List<BufferedImage> {
+        return persistenceFacade.getEntryImages(user)
     }
 }

@@ -18,6 +18,7 @@ import uz.warcom.contest.persistence.exception.UserNotFoundException
 import uz.warcom.contest.persistence.service.ContestService
 import uz.warcom.contest.persistence.service.EntryService
 import uz.warcom.contest.persistence.service.UserService
+import java.awt.image.BufferedImage
 
 @Service
 class PersistenceFacade
@@ -38,6 +39,14 @@ class PersistenceFacade
         val entry = entryService.createEntry(user)
 
         return entryMapStruct.toEntryData(entry)
+    }
+
+    fun getEntryImages (telegramUser: User): List<BufferedImage> {
+        val user = checkUser(telegramUser)
+
+        val croppedImages = entryService.compileEntryImage(user)
+
+        return croppedImages
     }
 
     fun getEntries (): List<EntryData> {

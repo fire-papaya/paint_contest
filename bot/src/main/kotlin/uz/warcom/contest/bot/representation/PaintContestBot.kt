@@ -7,19 +7,27 @@ import org.telegram.abilitybots.api.objects.Ability
 import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod
 import org.telegram.telegrambots.meta.api.methods.GetFile
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
+import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
-import uz.warcom.contest.bot.model.EntryData
-import uz.warcom.contest.bot.model.ImageToSave
+import uz.warcom.contest.bot.model.*
 import uz.warcom.contest.bot.model.enum.Commands
 import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
+import java.io.Serializable
+import javax.imageio.ImageIO
 
 
 @Component
@@ -130,7 +138,6 @@ class PaintContestBot
 //                sendPhoto.chatId = it.chatId().toString()
 //                sendPhoto.photo = InputFile()
 
-
                 silent.send(
                     "Вот твоя работа",
                     it.chatId()
@@ -178,6 +185,35 @@ class PaintContestBot
                 }
 
                 silent.send(messageBuffer.toString(), messageContext.chatId())
+            }
+            .build()
+    }
+
+    fun croppedImages (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.CROPPED)
+            .info("Retrieve cropped images")
+            .locality(Locality.ALL)
+            .privacy(Privacy.ADMIN)
+            .action { messageContext ->
+                try {
+                    val cropped = adminService.getEntryImage(messageContext.user())
+                    val sendPhoto = SendPhoto()
+                    sendPhoto.chatId = messageContext.chatId().toString()
+
+                    val os = ByteArrayOutputStream()
+                    ImageIO.write(cropped[0], "jpeg", os)
+
+                    val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
+                    sendPhoto.photo = InputFile(inputStream, "myImage.jpg")
+                    // Execute the method
+                    execute(sendPhoto)
+                } catch (e: TelegramApiException) {
+                    e.printStackTrace()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
             }
             .build()
     }
@@ -248,24 +284,6 @@ class PaintContestBot
             file.filePath
         }
     }
-
-//    fun getFilePath(document: Document): String {
-//        // Todo throw proper exception for file type
-//        // Todo add max image size
-//        if (document.mimeType != "image/jpeg") {
-//            throw RuntimeException("Improper mime type")
-//        }
-//
-//        if (document.fileSize > 3_000_000) {
-//            throw RuntimeException("File is too big")
-//        }
-//
-//        val getFileMethod = GetFile()
-//        getFileMethod.fileId = document.fileId
-//
-//        val file = this.execute(getFileMethod)
-//        return file.filePath
-//    }
 
     fun downloadPhoto(filePath: String): InputStream {
         return this.downloadFileAsStream(filePath)

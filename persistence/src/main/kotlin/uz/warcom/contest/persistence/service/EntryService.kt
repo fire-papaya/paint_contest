@@ -8,6 +8,7 @@ import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.EntryNotFoundException
 import uz.warcom.contest.persistence.repository.EntryRepository
+import java.awt.image.BufferedImage
 
 
 @Service
@@ -44,23 +45,23 @@ constructor(
         return getEntries(contest)
     }
 
-    private fun getEntry (user: WarcomUser, contest: Contest): Entry? {
-        return entryRepository.findFirstByContestAndUser(contest, user)
-    }
-
-    private fun getEntries (contest: Contest): List<Entry> {
-        return entryRepository.findAllByContest(contest)
-    }
-
     fun addEntryImage (entryImage: ImageDto) {
         val entry = getCurrentEntry(entryImage.user)
 
         imageService.addEntryImage(entry, entryImage)
     }
 
-    fun compileEntryImage (user: WarcomUser) {
+    fun compileEntryImage (user: WarcomUser): List<BufferedImage> {
         val entry = getCurrentEntry(user)
 
-        imageService.compileEntryImage(entry)
+        return imageService.compileEntryImage(entry)
+    }
+
+    private fun getEntry (user: WarcomUser, contest: Contest): Entry? {
+        return entryRepository.findFirstByContestAndUser(contest, user)
+    }
+
+    private fun getEntries (contest: Contest): List<Entry> {
+        return entryRepository.findAllByContest(contest)
     }
 }

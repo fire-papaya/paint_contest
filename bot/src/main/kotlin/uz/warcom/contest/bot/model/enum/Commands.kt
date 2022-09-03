@@ -10,5 +10,6 @@ class Commands {
         const val READY = "ready"
         // Admin commands
         const val ENTRIES = "entries"
+        const val CROPPED = "cropped"
     }
 }
