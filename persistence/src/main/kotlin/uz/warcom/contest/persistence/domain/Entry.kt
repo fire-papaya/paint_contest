@@ -10,7 +10,7 @@ class Entry : AbstractIntEntity() {
     var code: String = CodeGenerator.generate()
         private set
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     var user: WarcomUser? = null
         private set

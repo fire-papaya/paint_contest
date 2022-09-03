@@ -1,6 +1,7 @@
 package uz.warcom.contest.bot.model.mapper
 
 import org.mapstruct.Mapper
+import org.mapstruct.Mapping
 import uz.warcom.contest.bot.model.ContestData
 import uz.warcom.contest.bot.model.EntryData
 import uz.warcom.contest.bot.model.ImageData
@@ -12,6 +13,7 @@ import uz.warcom.contest.persistence.domain.Image
 @Mapper(componentModel = "spring")
 interface EntryMapStruct {
 
+    @Mapping(source = "user.username", target = "user")
     fun toEntryData (entity: Entry): EntryData
 
     fun toImageData (entity: Image): ImageData

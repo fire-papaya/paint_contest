@@ -40,6 +40,12 @@ class PersistenceFacade
         return entryMapStruct.toEntryData(entry)
     }
 
+    fun getEntries (): List<EntryData> {
+        val entries = entryService.getCurrentEntries()
+
+        return entries.map { entryMapStruct.toEntryData(it) }
+    }
+
     fun postPicture (imageToSave: ImageToSave): EntryData {
         val user = checkUser(imageToSave.telegramUser)
 

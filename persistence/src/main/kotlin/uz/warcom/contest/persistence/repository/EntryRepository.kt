@@ -9,6 +9,9 @@ import uz.warcom.contest.persistence.domain.WarcomUser
 
 @Repository
 interface EntryRepository: JpaRepository<Entry, Int> {
-    @EntityGraph(attributePaths = ["images"])
+    @EntityGraph(attributePaths = ["images", "user"])
     fun findFirstByContestAndUser(contest: Contest, user: WarcomUser) : Entry?
+
+    @EntityGraph(attributePaths = ["images", "user"])
+    fun findAllByContest(contest: Contest): List<Entry>
 }

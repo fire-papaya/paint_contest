@@ -2,11 +2,13 @@ package uz.warcom.contest.bot.model.enum
 
 class Commands {
     companion object {
-        val START = "start"
-        val CHECK = "check"
-        val CONTEST = "contest"
-        val CODE = "code"
-        val PRIME = "prime"
-        val READY = "ready"
+        const val START = "start"
+        const val CHECK = "check"
+        const val CONTEST = "contest"
+        const val CODE = "code"
+        const val PRIME = "prime"
+        const val READY = "ready"
+        // Admin commands
+        const val ENTRIES = "entries"
     }
 }

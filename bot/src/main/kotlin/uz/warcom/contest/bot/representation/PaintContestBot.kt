@@ -12,11 +12,11 @@ import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
-import uz.warcom.contest.bot.exception.PhotoShapeException
 import uz.warcom.contest.bot.model.EntryData
 import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enum.Commands
 import uz.warcom.contest.bot.model.enum.UserState
+import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import java.io.InputStream
@@ -26,7 +26,8 @@ import java.io.InputStream
 class PaintContestBot
 @Autowired constructor(
     private val botConfiguration: BotConfiguration,
-    private val persistenceFacade: PersistenceFacade
+    private val persistenceFacade: PersistenceFacade,
+    private val adminService: AdminService
 ): AbilityBot(botConfiguration.token, botConfiguration.username) {
 
     fun start () : Ability {
@@ -159,6 +160,28 @@ class PaintContestBot
             .build()
     }
 
+    fun entries () : Ability {
+        return Ability
+            .builder()
+            .name(Commands.ENTRIES)
+            .info("Retrieve information about current entries")
+            .locality(Locality.ALL)
+            .privacy(Privacy.ADMIN)
+            .action { messageContext ->
+                val summary = adminService.getEntriesSummary()
+                val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
+                summary.usersMap.values.forEach {
+                    messageBuffer.append(it.user).append(": ")
+                        .append(if (it.isPrimed) '\u2714'.toString() else "")
+                        .append(if (it.isReady) '\u2705'.toString() else "")
+                        .append("\n")
+                }
+
+                silent.send(messageBuffer.toString(), messageContext.chatId())
+            }
+            .build()
+    }
+
     fun processImage(): Ability {
         return Ability.builder()
             .name(DEFAULT)
@@ -204,19 +227,14 @@ class PaintContestBot
 
     fun checkPhoto(update: Update): PhotoSize {
         // Check that the update contains a message and the message has a photo
-        if (update.message?.hasPhoto() != true )
+        if (update.message?.hasPhoto() != true)
             throw IllegalStateException("No photos were found in message")
 
         val photos = update.message.photo
 
-        val photo = photos.stream()
+        return photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { IllegalStateException("No photos were found in photos stream") }
-
-//        if (photo.height != photo.width)
-//            throw PhotoShapeException()
-
-        return photo
     }
 
     fun getFilePath(photo: PhotoSize): String {
