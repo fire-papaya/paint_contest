@@ -7,7 +7,6 @@ import org.telegram.abilitybots.api.objects.Ability
 import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod
 import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
@@ -26,7 +25,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.Serializable
 import javax.imageio.ImageIO
 
 
@@ -198,14 +196,14 @@ class PaintContestBot
             .privacy(Privacy.ADMIN)
             .action { messageContext ->
                 try {
-                    val cropped = adminService.getEntryImage(messageContext.user())
+                    val cropped = adminService.getContestImages(messageContext.user())
                     val sendPhoto = SendPhoto()
                     sendPhoto.chatId = messageContext.chatId().toString()
 
                     val os = ByteArrayOutputStream()
-                    ImageIO.write(cropped[0], "jpeg", os)
+                    ImageIO.write(cropped[0], "jpg", os)
 
-                    val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
+                    val inputStream = ByteArrayInputStream(os.toByteArray())
                     sendPhoto.photo = InputFile(inputStream, "myImage.jpg")
                     // Execute the method
                     execute(sendPhoto)

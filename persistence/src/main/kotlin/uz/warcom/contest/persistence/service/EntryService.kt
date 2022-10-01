@@ -51,10 +51,10 @@ constructor(
         imageService.addEntryImage(entry, entryImage)
     }
 
-    fun compileEntryImage (user: WarcomUser): List<BufferedImage> {
+    fun getEntryImages (user: WarcomUser): List<BufferedImage> {
         val entry = getCurrentEntry(user)
 
-        return imageService.compileEntryImage(entry)
+        return imageService.getEntryImages(entry)
     }
 
     private fun getEntry (user: WarcomUser, contest: Contest): Entry? {

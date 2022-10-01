@@ -44,7 +44,7 @@ class PersistenceFacade
     fun getEntryImages (telegramUser: User): List<BufferedImage> {
         val user = checkUser(telegramUser)
 
-        val croppedImages = entryService.compileEntryImage(user)
+        val croppedImages = entryService.getEntryImages(user)
 
         return croppedImages
     }

@@ -28,7 +28,8 @@ class AdminService(
         return entriesSummary
     }
 
-    fun getEntryImage(user: User): List<BufferedImage> {
+    fun getEntryImages(telegramUser: Long): List<BufferedImage> {
+        val user = User(telegramUser, telegramUser.toString(), false)
         return persistenceFacade.getEntryImages(user)
     }
 }
