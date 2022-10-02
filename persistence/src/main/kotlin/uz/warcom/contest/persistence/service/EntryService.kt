@@ -1,8 +1,10 @@
 package uz.warcom.contest.persistence.service
 
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import uz.warcom.contest.persistence.domain.Contest
 import uz.warcom.contest.persistence.domain.Entry
+import uz.warcom.contest.persistence.domain.Image
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
@@ -57,8 +59,18 @@ constructor(
         return imageService.getEntryImages(entry)
     }
 
+    fun getEntryImagesInfo (entryId: Int): List<Image> {
+        val entry = getEntry(entryId) ?: throw EntryNotFoundException()
+
+        return imageService.getEntryImagesInfo(entry)
+    }
+
     private fun getEntry (user: WarcomUser, contest: Contest): Entry? {
         return entryRepository.findFirstByContestAndUser(contest, user)
+    }
+
+    private fun getEntry (entryId: Int): Entry? {
+        return entryRepository.findByIdOrNull(entryId)
     }
 
     private fun getEntries (contest: Contest): List<Entry> {

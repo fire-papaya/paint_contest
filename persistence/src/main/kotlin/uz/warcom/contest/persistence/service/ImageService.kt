@@ -10,6 +10,7 @@ import uz.warcom.contest.persistence.util.ImageCropper
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.*
+import java.util.stream.Collectors
 import javax.imageio.ImageIO
 
 
@@ -31,6 +32,18 @@ class ImageService (
         imageRepository.save(image)
     }
 
+    fun getEntryImagesInfo (entry: Entry): List<Image> {
+        val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
+
+        val primed = images.firstOrNull { !it.isReady } ?: throw RuntimeException()
+
+        val painted = images.stream().filter { it.isReady }.limit(3).collect(Collectors.toList())
+
+        painted.add(primed)
+
+        return painted
+    }
+
     fun getEntryImages (entry: Entry): List<BufferedImage> {
         val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
         // Todo proper exception
@@ -45,7 +58,7 @@ class ImageService (
         val croppedImages = mutableListOf<BufferedImage>()
 
         // Todo proper exception
-        val painted = images.asReversed().filter { it.isReady }.take(3).takeIf { it.size == 3 } ?: throw RuntimeException()
+        val painted = images.filter { it.isReady }.take(3).takeIf { it.size == 3 } ?: throw RuntimeException()
 
         painted.forEach { img ->
             val imageFile = File("${baseDir}/${entry.contest!!.id}/${entry.id!!}/${img.guid}.jpg")

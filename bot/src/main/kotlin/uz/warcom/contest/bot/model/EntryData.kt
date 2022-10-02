@@ -10,6 +10,7 @@ data class EntryData(
 
 data class EntrySummary (
     var user: String,
+    var id: Int,
     var isPrimed: Boolean = false,
     var isReady: Boolean = false
 )
