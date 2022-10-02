@@ -8,10 +8,11 @@ import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.GetFile
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
@@ -176,7 +177,8 @@ class PaintContestBot
                 val summary = adminService.getEntriesSummary()
                 val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
                 summary.usersMap.values.forEach {
-                    messageBuffer.append(it.user).append(": ")
+                    messageBuffer.append(it.user)
+                        .append(" [").append(it.id).append("]: ")
                         .append(if (it.isPrimed) '\u2714'.toString() else "")
                         .append(if (it.isReady) '\u2705'.toString() else "")
                         .append("\n")
@@ -187,26 +189,27 @@ class PaintContestBot
             .build()
     }
 
-    fun croppedImages (): Ability {
+    fun entryImages (): Ability {
         return Ability
             .builder()
-            .name(Commands.CROPPED)
+            .name(Commands.ENTRY)
             .info("Retrieve cropped images")
             .locality(Locality.ALL)
             .privacy(Privacy.ADMIN)
             .action { messageContext ->
+                if (messageContext.firstArg().isNullOrEmpty() || messageContext.firstArg().toIntOrNull() == null) {
+                    silent.send("No entry id was given", messageContext.chatId())
+                    return@action
+                }
+
                 try {
-                    val cropped = adminService.getContestImages(messageContext.user())
-                    val sendPhoto = SendPhoto()
-                    sendPhoto.chatId = messageContext.chatId().toString()
+                    val images = adminService.getEntryImagesInfo(messageContext.firstArg().toInt())
+                    val sendAlbum = SendMediaGroup()
+                    sendAlbum.chatId = messageContext.chatId().toString()
+                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
 
-                    val os = ByteArrayOutputStream()
-                    ImageIO.write(cropped[0], "jpg", os)
-
-                    val inputStream = ByteArrayInputStream(os.toByteArray())
-                    sendPhoto.photo = InputFile(inputStream, "myImage.jpg")
                     // Execute the method
-                    execute(sendPhoto)
+                    execute(sendAlbum)
                 } catch (e: TelegramApiException) {
                     e.printStackTrace()
                 } catch (e: IOException) {
@@ -231,7 +234,6 @@ class PaintContestBot
                     silent.send("Файлы и Документы не поддерживаются, отправь изображение как фотографию", it.chatId())
                     return@action
                 }
-
 
                 try {
                     if (state == UserState.PRIME || state == UserState.READY) {

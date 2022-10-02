@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.objects.User
 import uz.warcom.contest.bot.model.EntriesSummary
 import uz.warcom.contest.bot.model.EntrySummary
+import uz.warcom.contest.bot.model.ImageData
 import java.awt.image.BufferedImage
 import kotlin.random.Random
 
@@ -21,7 +22,8 @@ class AdminService(
             entriesSummary.usersMap[user] = EntrySummary(
                 user = user,
                 isPrimed = entryData.images.isNotEmpty(),
-                isReady = entryData.images.count { img -> img.isReady } >= 3
+                isReady = entryData.images.count { img -> img.isReady } >= 3,
+                id = entryData.id ?: throw IllegalStateException("entry doesn't have id")
             )
         }
 
@@ -32,4 +34,9 @@ class AdminService(
         val user = User(telegramUser, telegramUser.toString(), false)
         return persistenceFacade.getEntryImages(user)
     }
+
+    fun getEntryImagesInfo(entryId: Int): List<ImageData> {
+        return persistenceFacade.getEntryImagesInfo(entryId)
+    }
+
 }
