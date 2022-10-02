@@ -6,7 +6,8 @@ import java.time.LocalDateTime
 data class ImageData(
     var id: Int,
     var isReady: Boolean = false,
-    var dateCreated: LocalDateTime? = null
+    var dateCreated: LocalDateTime? = null,
+    var telegramFileId: String? = null
 )
 
 data class ImageToSave (
