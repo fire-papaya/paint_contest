@@ -9,24 +9,20 @@ import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
-import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
-import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
-import uz.warcom.contest.bot.model.*
+import uz.warcom.contest.bot.model.EntryData
+import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enum.Commands
 import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
-import javax.imageio.ImageIO
 
 
 @Component

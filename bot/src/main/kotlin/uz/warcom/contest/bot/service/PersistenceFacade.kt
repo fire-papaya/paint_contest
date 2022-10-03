@@ -7,7 +7,6 @@ import uz.warcom.contest.bot.exception.BotRequesterException
 import uz.warcom.contest.bot.model.*
 import uz.warcom.contest.bot.model.mapper.EntryMapStruct
 import uz.warcom.contest.bot.model.mapper.UserMapStruct
-import uz.warcom.contest.persistence.domain.Image
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.dto.UserDto
@@ -64,7 +63,8 @@ class PersistenceFacade
             ImageDto(
                 imageToSave.bytes,
                 user,
-                imageToSave.isReady
+                imageToSave.isReady,
+                imageToSave.fileId
             ))
 
         return checkEntry(imageToSave.telegramUser)

@@ -25,6 +25,7 @@ data class ImageToSave (
         if (telegramUser != other.telegramUser) return false
         if (!bytes.contentEquals(other.bytes)) return false
         if (isReady != other.isReady) return false
+        if (fileId != other.fileId) return false
 
         return true
     }

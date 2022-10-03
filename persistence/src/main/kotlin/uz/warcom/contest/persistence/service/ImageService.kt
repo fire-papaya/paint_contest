@@ -25,6 +25,7 @@ class ImageService (
             it.guid = UUID.randomUUID()
             it.entry = entry
             it.isReady = entryImage.isReady
+            it.telegramFileId = entryImage.fileId
         }
 
         savePhoto(entryImage.file, image)

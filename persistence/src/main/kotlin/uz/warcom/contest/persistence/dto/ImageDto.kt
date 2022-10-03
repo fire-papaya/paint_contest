@@ -5,7 +5,8 @@ import uz.warcom.contest.persistence.domain.WarcomUser
 data class ImageDto (
     val file: ByteArray,
     val user: WarcomUser,
-    val isReady: Boolean
+    val isReady: Boolean,
+    val fileId: String? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -24,6 +25,7 @@ data class ImageDto (
         var result = file.contentHashCode()
         result = 31 * result + user.hashCode()
         result = 31 * result + isReady.hashCode()
+        result = 31 * result + fileId.hashCode()
         return result
     }
 }
