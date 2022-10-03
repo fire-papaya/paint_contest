@@ -13,7 +13,8 @@ data class ImageData(
 data class ImageToSave (
     var telegramUser: User,
     var bytes: ByteArray,
-    var isReady: Boolean
+    var isReady: Boolean,
+    var fileId: String
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -30,8 +31,9 @@ data class ImageToSave (
 
     override fun hashCode(): Int {
         var result = telegramUser.hashCode()
-        result = 31 * result + bytes.contentHashCode()
         result = 31 * result + isReady.hashCode()
+        result = 31 * result + fileId.hashCode()
+        result = 31 * result + bytes.contentHashCode()
         return result
     }
 }

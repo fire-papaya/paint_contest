@@ -193,9 +193,10 @@ class PaintContestBot
         return Ability
             .builder()
             .name(Commands.ENTRY)
-            .info("Retrieve cropped images")
+            .info("Retrieve entry images")
             .locality(Locality.ALL)
             .privacy(Privacy.ADMIN)
+            .input(1)
             .action { messageContext ->
                 if (messageContext.firstArg().isNullOrEmpty() || messageContext.firstArg().toIntOrNull() == null) {
                     silent.send("No entry id was given", messageContext.chatId())
@@ -222,38 +223,37 @@ class PaintContestBot
     fun processImage(): Ability {
         return Ability.builder()
             .name(DEFAULT)
-            .flag(Flag.DOCUMENT.or(Flag.PHOTO))
+            .flag(Flag.PHOTO)
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .input(0)
             .action {
                 val state = getUserState(it.user().id)
+                if (state != UserState.PRIME && state != UserState.READY)
+                    return@action
+
                 var entry: EntryData?
 
-                if (it.update().message.hasDocument()) {
-                    silent.send("Файлы и Документы не поддерживаются, отправь изображение как фотографию", it.chatId())
-                    return@action
-                }
-
                 try {
-                    if (state == UserState.PRIME || state == UserState.READY) {
-                        downloadPhoto(it.update()).use { ist ->
-                            val bytes = ist.readAllBytes()
+                    val photo = retrieveHighestQuality(it.update().message.photo)
 
-                            entry = persistenceFacade.postPicture(ImageToSave(
-                                it.user(),
-                                bytes,
-                                state == UserState.READY
-                            ))
-                        }
+                    downloadPhoto(photo).use { ist ->
+                        val bytes = ist.readAllBytes()
 
-                        val message = if (state == UserState.PRIME)
-                            "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
-                        else
-                            "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
-
-                        silent.send(message, it.chatId())
+                        entry = persistenceFacade.postPicture(ImageToSave(
+                            it.user(),
+                            bytes,
+                            state == UserState.READY,
+                            photo.fileId
+                        ))
                     }
+
+                    val message = if (state == UserState.PRIME)
+                        "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
+                    else
+                        "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
+
+                    silent.send(message, it.chatId())
                 } catch (e: BotException) {
                     silent.send(e.message, it.chatId())
                 }
@@ -261,13 +261,7 @@ class PaintContestBot
             .build()
     }
 
-    fun checkPhoto(update: Update): PhotoSize {
-        // Check that the update contains a message and the message has a photo
-        if (update.message?.hasPhoto() != true)
-            throw IllegalStateException("No photos were found in message")
-
-        val photos = update.message.photo
-
+    fun retrieveHighestQuality(photos: List<PhotoSize>): PhotoSize {
         return photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { IllegalStateException("No photos were found in photos stream") }
@@ -285,18 +279,10 @@ class PaintContestBot
         }
     }
 
-    fun downloadPhoto(filePath: String): InputStream {
+    fun downloadPhoto(photo: PhotoSize): InputStream {
+        val filePath = getFilePath(photo)
+
         return this.downloadFileAsStream(filePath)
-    }
-
-    fun downloadPhoto(update: Update): InputStream {
-        val filePath = if (update.message.hasPhoto()) {
-            val photoSize = checkPhoto(update)
-            getFilePath(photoSize)
-        } else throw RuntimeException("No photo received")
-            // getFilePath(update.message.document)
-
-        return downloadPhoto(filePath)
     }
 
     private fun updateUserState (userId: Long, state: UserState) {
