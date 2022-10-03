@@ -1,5 +1,6 @@
 package uz.warcom.contest.bot.representation
 
+import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.telegram.abilitybots.api.bot.AbilityBot
@@ -194,23 +195,24 @@ class PaintContestBot
             .privacy(Privacy.ADMIN)
             .input(1)
             .action { messageContext ->
-                if (messageContext.firstArg().isNullOrEmpty() || messageContext.firstArg().toIntOrNull() == null) {
+                val entryId = messageContext.firstArg().toIntOrNull()
+                if (entryId == null) {
                     silent.send("No entry id was given", messageContext.chatId())
                     return@action
                 }
 
                 try {
-                    val images = adminService.getEntryImagesInfo(messageContext.firstArg().toInt())
+                    val images = adminService.getEntryImagesInfo(entryId)
                     val sendAlbum = SendMediaGroup()
                     sendAlbum.chatId = messageContext.chatId().toString()
                     sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
-
+                    sendAlbum.medias[0].caption = "Entry $entryId"
                     // Execute the method
                     execute(sendAlbum)
                 } catch (e: TelegramApiException) {
-                    e.printStackTrace()
+                    logger.error(e)
                 } catch (e: IOException) {
-                    e.printStackTrace()
+                    logger.error(e)
                 }
             }
             .build()
@@ -293,5 +295,9 @@ class PaintContestBot
 
     override fun creatorId(): Long {
         return botConfiguration.creator
+    }
+
+    companion object {
+        private val logger = LogManager.getLogger(PaintContestBot::class.java)
     }
 }
