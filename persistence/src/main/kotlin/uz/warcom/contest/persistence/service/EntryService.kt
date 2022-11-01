@@ -10,7 +10,6 @@ import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.EntryNotFoundException
 import uz.warcom.contest.persistence.repository.EntryRepository
-import java.awt.image.BufferedImage
 
 
 @Service

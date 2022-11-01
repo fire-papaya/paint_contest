@@ -1,24 +1,18 @@
 package uz.warcom.contest.persistence.service
 
-import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Service
 import uz.warcom.contest.persistence.domain.Entry
 import uz.warcom.contest.persistence.domain.Image
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.repository.ImageRepository
-import uz.warcom.contest.persistence.util.ImageCropper
-import java.awt.image.BufferedImage
-import java.io.File
 import java.util.*
 import java.util.stream.Collectors
-import javax.imageio.ImageIO
 
 
 @Service
 class ImageService (
     private val imageRepository: ImageRepository
 ) {
-    private val baseDir = "pics"
 
     fun addEntryImage (entry: Entry, entryImage: ImageDto) {
         val image = Image().also {

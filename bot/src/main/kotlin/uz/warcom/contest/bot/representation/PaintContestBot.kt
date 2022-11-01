@@ -11,7 +11,6 @@ import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
 import uz.warcom.contest.bot.model.EntryData
@@ -21,7 +20,6 @@ import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
-import java.io.IOException
 
 
 @Component

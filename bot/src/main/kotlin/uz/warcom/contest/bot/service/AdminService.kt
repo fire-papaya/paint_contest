@@ -1,7 +1,6 @@
 package uz.warcom.contest.bot.service
 
 import org.springframework.stereotype.Service
-import org.telegram.telegrambots.meta.api.objects.User
 import uz.warcom.contest.bot.model.EntriesSummary
 import uz.warcom.contest.bot.model.EntrySummary
 import uz.warcom.contest.bot.model.ImageData
@@ -27,11 +26,6 @@ class AdminService(
         }
 
         return entriesSummary
-    }
-
-    fun getEntryImagesByTelegramUser(telegramUser: Long): List<ImageData> {
-        val user = User(telegramUser, telegramUser.toString(), false)
-        return persistenceFacade.getEntryImages(user)
     }
 
     fun getEntryImagesInfo(entryId: Int): List<ImageData> {

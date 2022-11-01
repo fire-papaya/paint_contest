@@ -15,7 +15,6 @@ import uz.warcom.contest.persistence.exception.UserNotFoundException
 import uz.warcom.contest.persistence.service.ContestService
 import uz.warcom.contest.persistence.service.EntryService
 import uz.warcom.contest.persistence.service.UserService
-import java.awt.image.BufferedImage
 
 @Service
 class PersistenceFacade
