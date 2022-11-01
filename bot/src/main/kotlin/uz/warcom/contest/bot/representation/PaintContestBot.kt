@@ -8,7 +8,6 @@ import org.telegram.abilitybots.api.objects.Ability
 import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
-import org.telegram.telegrambots.meta.api.methods.GetFile
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
@@ -23,7 +22,6 @@ import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import java.io.IOException
-import java.io.InputStream
 
 
 @Component
@@ -201,19 +199,13 @@ class PaintContestBot
                     return@action
                 }
 
-                try {
-                    val images = adminService.getEntryImagesInfo(entryId)
-                    val sendAlbum = SendMediaGroup()
-                    sendAlbum.chatId = messageContext.chatId().toString()
-                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
-                    sendAlbum.medias[0].caption = "Entry $entryId"
-                    // Execute the method
-                    execute(sendAlbum)
-                } catch (e: TelegramApiException) {
-                    logger.error(e)
-                } catch (e: IOException) {
-                    logger.error(e)
-                }
+                val images = adminService.getEntryImagesInfo(entryId)
+                val sendAlbum = SendMediaGroup()
+                sendAlbum.chatId = messageContext.chatId().toString()
+                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                sendAlbum.medias[0].caption = "Entry $entryId"
+                // Execute the method
+                execute(sendAlbum)
             }
             .build()
     }
