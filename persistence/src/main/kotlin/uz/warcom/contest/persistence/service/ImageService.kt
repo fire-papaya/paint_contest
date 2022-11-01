@@ -28,8 +28,6 @@ class ImageService (
             it.telegramFileId = entryImage.fileId
         }
 
-        savePhoto(entryImage.file, image)
-
         imageRepository.save(image)
     }
 
@@ -72,14 +70,5 @@ class ImageService (
         croppedImages.add(croppedPrimed)
 
         return croppedImages
-    }
-
-    private fun savePhoto (photo: ByteArray, image: Image) {
-        val entry = image.entry!!
-        val contest = entry.contest!!
-
-        val targetFile = File("${baseDir}/${contest.id}/${entry.id!!}/${image.guid}.jpg")
-
-        FileUtils.writeByteArrayToFile(targetFile, photo)
     }
 }

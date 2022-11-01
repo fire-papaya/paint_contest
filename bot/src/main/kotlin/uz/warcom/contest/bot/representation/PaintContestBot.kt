@@ -130,10 +130,21 @@ class PaintContestBot
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action {
-//                val sendPhoto = SendPhoto()
-//                sendPhoto.chatId = it.chatId().toString()
-//                sendPhoto.photo = InputFile()
-
+//
+//                try {
+//                    val images = adminService.getEntryImagesInfo(entryId)
+//                    val sendAlbum = SendMediaGroup()
+//                    sendAlbum.chatId = messageContext.chatId().toString()
+//                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+//                    sendAlbum.medias[0].caption = "Entry $entryId"
+//                    // Execute the method
+//                    execute(sendAlbum)
+//                } catch (e: TelegramApiException) {
+//                    logger.error(e)
+//                } catch (e: IOException) {
+//                    logger.error(e)
+//                }
+//
                 silent.send(
                     "Вот твоя работа",
                     it.chatId()
@@ -230,26 +241,21 @@ class PaintContestBot
                 if (state != UserState.PRIME && state != UserState.READY)
                     return@action
 
-                var entry: EntryData?
+                val entry: EntryData
 
                 try {
                     val photo = retrieveHighestQuality(it.update().message.photo)
 
-                    downloadPhoto(photo).use { ist ->
-                        val bytes = ist.readAllBytes()
-
-                        entry = persistenceFacade.postPicture(ImageToSave(
-                            it.user(),
-                            bytes,
-                            state == UserState.READY,
-                            photo.fileId
-                        ))
-                    }
+                    entry = persistenceFacade.postPicture(ImageToSave(
+                        it.user(),
+                        state == UserState.READY,
+                        photo.fileId
+                    ))
 
                     val message = if (state == UserState.PRIME)
                         "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
                     else
-                        "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
+                        "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3"
 
                     silent.send(message, it.chatId())
                 } catch (e: BotException) {
@@ -263,24 +269,6 @@ class PaintContestBot
         return photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { IllegalStateException("No photos were found in photos stream") }
-    }
-
-    fun getFilePath(photo: PhotoSize): String {
-        return if (photo.filePath != null) photo.filePath
-        else {
-            // We create a GetFile method and set the file_id from the photo
-            val getFileMethod = GetFile()
-            getFileMethod.fileId = photo.fileId
-            // We execute the method using AbsSender::execute method.
-            val file = this.execute(getFileMethod)
-            file.filePath
-        }
-    }
-
-    fun downloadPhoto(photo: PhotoSize): InputStream {
-        val filePath = getFilePath(photo)
-
-        return this.downloadFileAsStream(filePath)
     }
 
     private fun updateUserState (userId: Long, state: UserState) {

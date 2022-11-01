@@ -61,7 +61,6 @@ class PersistenceFacade
 
         entryService.addEntryImage(
             ImageDto(
-                imageToSave.bytes,
                 user,
                 imageToSave.isReady,
                 imageToSave.fileId
