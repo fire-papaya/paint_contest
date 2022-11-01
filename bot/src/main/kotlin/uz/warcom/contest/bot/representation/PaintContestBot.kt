@@ -1,5 +1,6 @@
 package uz.warcom.contest.bot.representation
 
+import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.telegram.abilitybots.api.bot.AbilityBot
@@ -7,27 +8,18 @@ import org.telegram.abilitybots.api.objects.Ability
 import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod
-import org.telegram.telegrambots.meta.api.methods.GetFile
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
-import org.telegram.telegrambots.meta.api.objects.InputFile
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.objects.PhotoSize
-import org.telegram.telegrambots.meta.api.objects.Update
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
-import uz.warcom.contest.bot.model.*
+import uz.warcom.contest.bot.model.EntryData
+import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enum.Commands
 import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.Serializable
-import javax.imageio.ImageIO
 
 
 @Component
@@ -133,15 +125,15 @@ class PaintContestBot
             .info("Review current submission")
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
-            .action {
-//                val sendPhoto = SendPhoto()
-//                sendPhoto.chatId = it.chatId().toString()
-//                sendPhoto.photo = InputFile()
+            .action { messageContext ->
 
-                silent.send(
-                    "Вот твоя работа",
-                    it.chatId()
-                )
+                val images = persistenceFacade.getEntryImages(messageContext.user())
+                val sendAlbum = SendMediaGroup()
+                sendAlbum.chatId = messageContext.chatId().toString()
+                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                sendAlbum.medias[0].caption = "Вот твоя работа"
+                // Execute the method
+                execute(sendAlbum)
             }
             .build()
     }
@@ -178,7 +170,8 @@ class PaintContestBot
                 val summary = adminService.getEntriesSummary()
                 val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
                 summary.usersMap.values.forEach {
-                    messageBuffer.append(it.user).append(": ")
+                    messageBuffer.append(it.user)
+                        .append(" [").append(it.id).append("]: ")
                         .append(if (it.isPrimed) '\u2714'.toString() else "")
                         .append(if (it.isReady) '\u2705'.toString() else "")
                         .append("\n")
@@ -189,31 +182,28 @@ class PaintContestBot
             .build()
     }
 
-    fun croppedImages (): Ability {
+    fun entryImages (): Ability {
         return Ability
             .builder()
-            .name(Commands.CROPPED)
-            .info("Retrieve cropped images")
+            .name(Commands.ENTRY)
+            .info("Retrieve entry images")
             .locality(Locality.ALL)
             .privacy(Privacy.ADMIN)
+            .input(1)
             .action { messageContext ->
-                try {
-                    val cropped = adminService.getEntryImage(messageContext.user())
-                    val sendPhoto = SendPhoto()
-                    sendPhoto.chatId = messageContext.chatId().toString()
-
-                    val os = ByteArrayOutputStream()
-                    ImageIO.write(cropped[0], "jpeg", os)
-
-                    val inputStream: InputStream = ByteArrayInputStream(os.toByteArray())
-                    sendPhoto.photo = InputFile(inputStream, "myImage.jpg")
-                    // Execute the method
-                    execute(sendPhoto)
-                } catch (e: TelegramApiException) {
-                    e.printStackTrace()
-                } catch (e: IOException) {
-                    e.printStackTrace()
+                val entryId = messageContext.firstArg().toIntOrNull()
+                if (entryId == null) {
+                    silent.send("No entry id was given", messageContext.chatId())
+                    return@action
                 }
+
+                val images = adminService.getEntryImagesInfo(entryId)
+                val sendAlbum = SendMediaGroup()
+                sendAlbum.chatId = messageContext.chatId().toString()
+                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                sendAlbum.medias[0].caption = "Entry $entryId"
+                // Execute the method
+                execute(sendAlbum)
             }
             .build()
     }
@@ -221,39 +211,32 @@ class PaintContestBot
     fun processImage(): Ability {
         return Ability.builder()
             .name(DEFAULT)
-            .flag(Flag.DOCUMENT.or(Flag.PHOTO))
+            .flag(Flag.PHOTO)
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .input(0)
             .action {
                 val state = getUserState(it.user().id)
-                var entry: EntryData?
-
-                if (it.update().message.hasDocument()) {
-                    silent.send("Файлы и Документы не поддерживаются, отправь изображение как фотографию", it.chatId())
+                if (state != UserState.PRIME && state != UserState.READY)
                     return@action
-                }
 
+                val entry: EntryData
 
                 try {
-                    if (state == UserState.PRIME || state == UserState.READY) {
-                        downloadPhoto(it.update()).use { ist ->
-                            val bytes = ist.readAllBytes()
+                    val photo = retrieveHighestQuality(it.update().message.photo)
 
-                            entry = persistenceFacade.postPicture(ImageToSave(
-                                it.user(),
-                                bytes,
-                                state == UserState.READY
-                            ))
-                        }
+                    entry = persistenceFacade.postPicture(ImageToSave(
+                        it.user(),
+                        state == UserState.READY,
+                        photo.fileId
+                    ))
 
-                        val message = if (state == UserState.PRIME)
-                            "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
-                        else
-                            "Изображение получено: ${entry?.images?.filter { img -> img.isReady }?.size ?: 0}/3"
+                    val message = if (state == UserState.PRIME)
+                        "Изображение получено, используй команду /${Commands.READY} , когда закончишь покрас"
+                    else
+                        "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3"
 
-                        silent.send(message, it.chatId())
-                    }
+                    silent.send(message, it.chatId())
                 } catch (e: BotException) {
                     silent.send(e.message, it.chatId())
                 }
@@ -261,42 +244,10 @@ class PaintContestBot
             .build()
     }
 
-    fun checkPhoto(update: Update): PhotoSize {
-        // Check that the update contains a message and the message has a photo
-        if (update.message?.hasPhoto() != true)
-            throw IllegalStateException("No photos were found in message")
-
-        val photos = update.message.photo
-
+    fun retrieveHighestQuality(photos: List<PhotoSize>): PhotoSize {
         return photos.stream()
             .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
             .orElseThrow { IllegalStateException("No photos were found in photos stream") }
-    }
-
-    fun getFilePath(photo: PhotoSize): String {
-        return if (photo.filePath != null) photo.filePath
-        else {
-            // We create a GetFile method and set the file_id from the photo
-            val getFileMethod = GetFile()
-            getFileMethod.fileId = photo.fileId
-            // We execute the method using AbsSender::execute method.
-            val file = this.execute(getFileMethod)
-            file.filePath
-        }
-    }
-
-    fun downloadPhoto(filePath: String): InputStream {
-        return this.downloadFileAsStream(filePath)
-    }
-
-    fun downloadPhoto(update: Update): InputStream {
-        val filePath = if (update.message.hasPhoto()) {
-            val photoSize = checkPhoto(update)
-            getFilePath(photoSize)
-        } else throw RuntimeException("No photo received")
-            // getFilePath(update.message.document)
-
-        return downloadPhoto(filePath)
     }
 
     private fun updateUserState (userId: Long, state: UserState) {
@@ -311,5 +262,9 @@ class PaintContestBot
 
     override fun creatorId(): Long {
         return botConfiguration.creator
+    }
+
+    companion object {
+        private val logger = LogManager.getLogger(PaintContestBot::class.java)
     }
 }

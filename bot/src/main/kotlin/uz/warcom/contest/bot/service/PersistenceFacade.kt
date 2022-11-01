@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.objects.User
 import uz.warcom.contest.bot.exception.BotRequesterException
-import uz.warcom.contest.bot.model.ContestData
-import uz.warcom.contest.bot.model.EntryData
-import uz.warcom.contest.bot.model.ImageToSave
-import uz.warcom.contest.bot.model.UserData
+import uz.warcom.contest.bot.model.*
 import uz.warcom.contest.bot.model.mapper.EntryMapStruct
 import uz.warcom.contest.bot.model.mapper.UserMapStruct
 import uz.warcom.contest.persistence.domain.WarcomUser
@@ -18,7 +15,6 @@ import uz.warcom.contest.persistence.exception.UserNotFoundException
 import uz.warcom.contest.persistence.service.ContestService
 import uz.warcom.contest.persistence.service.EntryService
 import uz.warcom.contest.persistence.service.UserService
-import java.awt.image.BufferedImage
 
 @Service
 class PersistenceFacade
@@ -41,12 +37,17 @@ class PersistenceFacade
         return entryMapStruct.toEntryData(entry)
     }
 
-    fun getEntryImages (telegramUser: User): List<BufferedImage> {
+    fun getEntryImages(telegramUser: User): List<ImageData> {
         val user = checkUser(telegramUser)
 
-        val croppedImages = entryService.compileEntryImage(user)
+        return entryService.getEntryImages(user)
+            .map { entryMapStruct.toImageData(it) }
+    }
 
-        return croppedImages
+    fun getEntryImagesInfo(entryId: Int): List<ImageData> {
+        val images = entryService.getEntryImagesInfo(entryId)
+
+        return images.map { entryMapStruct.toImageData(it) }
     }
 
     fun getEntries (): List<EntryData> {
@@ -60,9 +61,9 @@ class PersistenceFacade
 
         entryService.addEntryImage(
             ImageDto(
-                imageToSave.bytes,
                 user,
-                imageToSave.isReady
+                imageToSave.isReady,
+                imageToSave.fileId
             ))
 
         return checkEntry(imageToSave.telegramUser)

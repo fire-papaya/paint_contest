@@ -27,4 +27,7 @@ class Image {
     @Column(name = "date_created")
     @CreationTimestamp
     var dateCreated: LocalDateTime? = null
+
+    @Column(name = "telegram_file_id")
+    var telegramFileId: String? = null
 }
