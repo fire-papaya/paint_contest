@@ -38,10 +38,11 @@ class PersistenceFacade
         return entryMapStruct.toEntryData(entry)
     }
 
-    fun getEntryImages(telegramUser: User): List<BufferedImage> {
+    fun getEntryImages(telegramUser: User): List<ImageData> {
         val user = checkUser(telegramUser)
 
         return entryService.getEntryImages(user)
+            .map { entryMapStruct.toImageData(it) }
     }
 
     fun getEntryImagesInfo(entryId: Int): List<ImageData> {

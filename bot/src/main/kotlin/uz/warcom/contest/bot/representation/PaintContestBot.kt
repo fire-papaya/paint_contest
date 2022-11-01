@@ -129,26 +129,15 @@ class PaintContestBot
             .info("Review current submission")
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
-            .action {
-//
-//                try {
-//                    val images = adminService.getEntryImagesInfo(entryId)
-//                    val sendAlbum = SendMediaGroup()
-//                    sendAlbum.chatId = messageContext.chatId().toString()
-//                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
-//                    sendAlbum.medias[0].caption = "Entry $entryId"
-//                    // Execute the method
-//                    execute(sendAlbum)
-//                } catch (e: TelegramApiException) {
-//                    logger.error(e)
-//                } catch (e: IOException) {
-//                    logger.error(e)
-//                }
-//
-                silent.send(
-                    "Вот твоя работа",
-                    it.chatId()
-                )
+            .action { messageContext ->
+
+                val images = persistenceFacade.getEntryImages(messageContext.user())
+                val sendAlbum = SendMediaGroup()
+                sendAlbum.chatId = messageContext.chatId().toString()
+                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                sendAlbum.medias[0].caption = "Вот твоя работа"
+                // Execute the method
+                execute(sendAlbum)
             }
             .build()
     }

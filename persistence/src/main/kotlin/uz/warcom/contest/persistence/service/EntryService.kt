@@ -53,7 +53,7 @@ constructor(
         imageService.addEntryImage(entry, entryImage)
     }
 
-    fun getEntryImages (user: WarcomUser): List<BufferedImage> {
+    fun getEntryImages (user: WarcomUser): List<Image> {
         val entry = getCurrentEntry(user)
 
         return imageService.getEntryImages(entry)

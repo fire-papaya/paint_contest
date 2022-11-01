@@ -43,32 +43,17 @@ class ImageService (
         return painted
     }
 
-    fun getEntryImages (entry: Entry): List<BufferedImage> {
+    fun getEntryImages (entry: Entry): List<Image> {
         val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
         // Todo proper exception
         val primed = images.lastOrNull { !it.isReady } ?: throw RuntimeException()
 
-        val primedFile = File("${baseDir}/${entry.contest!!.id}/${entry.id!!}/${primed.guid}.jpg")
-
-        val imagePrimed = ImageIO.read(primedFile)
-
-        val croppedPrimed = ImageCropper.cropSquare(imagePrimed)
-
-        val croppedImages = mutableListOf<BufferedImage>()
-
         // Todo proper exception
-        val painted = images.filter { it.isReady }.take(3).takeIf { it.size == 3 } ?: throw RuntimeException()
+        val painted = images.filter { it.isReady }.take(3).takeIf { it.size == 3 }?.toMutableList()
+            ?: throw RuntimeException()
 
-        painted.forEach { img ->
-            val imageFile = File("${baseDir}/${entry.contest!!.id}/${entry.id!!}/${img.guid}.jpg")
-            val image = ImageIO.read(imageFile)
-            val cropped = ImageCropper.cropSquare(image)
+        painted.add(primed)
 
-            croppedImages.add(cropped)
-        }
-
-        croppedImages.add(croppedPrimed)
-
-        return croppedImages
+        return painted
     }
 }
