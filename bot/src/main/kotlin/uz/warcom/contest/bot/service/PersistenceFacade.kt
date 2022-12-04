@@ -82,7 +82,8 @@ class PersistenceFacade
         return try {
             userService.getUserByTelegramId(telegramUser.id)
         } catch (e: UserNotFoundException) {
-            userService.createUser(UserDto(telegramId = telegramUser.id, username = telegramUser.userName))
+            val username = if (telegramUser.userName.isNullOrBlank()) "user_${telegramUser.id}" else telegramUser.userName
+            userService.createUser(UserDto(telegramId = telegramUser.id, username = username))
         }
     }
 }
