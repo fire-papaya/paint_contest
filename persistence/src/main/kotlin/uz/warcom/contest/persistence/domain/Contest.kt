@@ -2,6 +2,9 @@ package uz.warcom.contest.persistence.domain
 
 import java.time.LocalDateTime
 import javax.persistence.Entity
+import javax.persistence.FetchType
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 
 @Entity
 class Contest : AbstractIntEntity() {
@@ -13,4 +16,8 @@ class Contest : AbstractIntEntity() {
     var startDate: LocalDateTime? = null
 
     var endDate: LocalDateTime? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_id")
+    var user: Community? = null
 }
