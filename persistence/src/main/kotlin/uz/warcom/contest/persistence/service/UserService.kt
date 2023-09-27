@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.UserDto
 import uz.warcom.contest.persistence.exception.UserNotFoundException
+import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
 import uz.warcom.contest.persistence.repository.UserRepository
 
 @Service
@@ -14,7 +15,12 @@ class UserService
 ) {
 
     fun getUserByTelegramId (telegramId: Long): WarcomUser {
-        return userRepository.findByTelegramId(telegramId) ?: throw UserNotFoundException()
+        val user = userRepository.findByTelegramId(telegramId) ?: throw UserNotFoundException()
+
+        if (user.community == null)
+            throw UserWithoutCommunityException()
+
+        return user
     }
 
     fun createUser (userData: UserDto): WarcomUser {

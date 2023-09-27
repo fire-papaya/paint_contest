@@ -9,3 +9,5 @@ class ContestNotFoundException(): NotFoundException("Contest was not found")
 class EntryNotFoundException(): NotFoundException("Entry was not found")
 
 class UserNotFoundException() : NotFoundException("Requested user was not found")
+
+class UserWithoutCommunityException(): LogicException("User is not assigned to any community")
