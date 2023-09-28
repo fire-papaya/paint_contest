@@ -21,7 +21,7 @@ constructor(
 ){
 
     fun createEntry (user: WarcomUser): Entry {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+        val contest = contestService.currentContest(user.community!!) ?: throw ContestNotFoundException()
 
         val existing = getEntry(user, contest)
         if (existing != null)
@@ -35,7 +35,7 @@ constructor(
     }
 
     fun getCurrentEntry (user: WarcomUser): Entry {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+        val contest = contestService.currentContest(user.community!!) ?: throw ContestNotFoundException()
 
         return getEntry(user, contest) ?: throw EntryNotFoundException()
     }

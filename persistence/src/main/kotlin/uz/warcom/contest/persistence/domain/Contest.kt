@@ -19,5 +19,5 @@ class Contest : AbstractIntEntity() {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id")
-    var user: Community? = null
+    var community: Community? = null
 }
