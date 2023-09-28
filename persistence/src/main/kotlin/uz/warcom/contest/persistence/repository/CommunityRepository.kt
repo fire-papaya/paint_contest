@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uz.warcom.contest.persistence.domain.Community
 
 @Repository
-interface CommunityRepository: CrudRepository<Community, Int>
+interface CommunityRepository: CrudRepository<Community, Int> {
+    fun findByLabel(label: String): Community?
+}

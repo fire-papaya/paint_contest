@@ -8,6 +8,8 @@ class Commands {
         const val CODE = "code"
         const val PRIME = "prime"
         const val READY = "ready"
+        const val COMMUNITIES = "communities"
+        const val SWITCH_COMMUNITY = "switch_community"
         // Admin commands
         const val ENTRIES = "entries"
         const val ENTRY = "entry"

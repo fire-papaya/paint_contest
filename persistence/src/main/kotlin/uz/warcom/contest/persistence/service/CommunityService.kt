@@ -10,10 +10,14 @@ class CommunityService constructor(
     private val communityRepository: CommunityRepository
 ){
     fun getCommunities(): List<Community> {
-        return communityRepository.findAll().map{ x -> x }
+        return communityRepository.findAll().toList()
     }
 
     fun getCommunity(id: Int): Community? {
         return communityRepository.findByIdOrNull(id)
+    }
+
+    fun getCommunity(label: String): Community? {
+        return communityRepository.findByLabel(label)
     }
 }
