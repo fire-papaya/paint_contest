@@ -40,7 +40,8 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 silent.send(
-                    "Привет! Это бот для подачи твоих работ на конкурс покраса от WarComUz.",
+                    "Привет! Это бот для подачи твоих работ на конкурс покраса от WarComUz. " +
+                            "Для начала выбери себе комьюнити используя команду `/communities`",
                     it.chatId()
                 )
             }
