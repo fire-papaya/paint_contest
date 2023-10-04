@@ -69,7 +69,24 @@ class PaintContestBot
 
                 silent.send(message + "\n" + info_message, messageContext.chatId())
             }
-            .post { updateUserState(it.user().id, UserState.CODE) }
+            .build()
+    }
+
+    fun switchCommunity (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.SWITCH_COMMUNITY)
+            .info("Switch to a different community")
+            .locality(Locality.ALL)
+            .privacy(Privacy.PUBLIC)
+            .input(1)
+            .action {
+                val communityCode = it.firstArg()
+                val telegramUser = it.user()
+                val data = persistenceFacade.switchUserCommunity(telegramUser, communityCode)
+
+                silent.send("Твоё новое комьюнити: ${data.community?.name}", it.chatId())
+            }
             .build()
     }
 
@@ -189,7 +206,7 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
-                    persistenceFacade.getCurrentContest().toMessage()
+                    persistenceFacade.getCurrentContest(it.user()).toMessage()
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
                 } catch (e: UserWithoutCommunityException) {
@@ -212,7 +229,7 @@ class PaintContestBot
             .privacy(Privacy.ADMIN)
             .input(1)
             .action { messageContext ->
-                val communityId = messageContext.firstArg().toIntOrNull()
+                val communityCode = messageContext.firstArg().toIntOrNull()
                 val summary = adminService.getEntriesSummary()
                 val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
                 summary.usersMap.values.forEach {

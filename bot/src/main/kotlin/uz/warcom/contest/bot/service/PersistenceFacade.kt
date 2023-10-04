@@ -83,8 +83,11 @@ class PersistenceFacade
         return checkEntry(imageToSave.telegramUser)
     }
 
-    fun getCurrentContest (): ContestData {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+    fun getCurrentContest (telegramUser: User): ContestData {
+        val user = checkUser(telegramUser)
+
+        val contest = contestService.currentContest(user.community!!)
+            ?: throw ContestNotFoundException()
 
         return entryMapStruct.toContestData(contest)
     }
