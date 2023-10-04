@@ -63,8 +63,9 @@ class PaintContestBot
                         " выбери себе комьюнити и используй его код вместе с командой \n/switch_community ," +
                         " например: \n`/switch_community WRCM`"
 
-                val message = "Код - Комьюнити\n" + communityList.map { it.label + "  -  " + it.name + "\n" }
-                    .joinToString(separator = "")
+                val message = "Список доступных комьюнити:\nКод - Комьюнити\n" +
+                        communityList.map { it.label + "  -  " + it.name + "\n" }
+                            .joinToString(separator = "")
 
 
                 silent.send(message + "\n" + info_message, messageContext.chatId())
