@@ -10,10 +10,11 @@ import uz.warcom.contest.persistence.repository.UserRepository
 @Service
 class UserService
 @Autowired constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val communityService: CommunityService
 ) {
 
-    fun getUserByTelegramId (telegramId: Long): WarcomUser {
+    fun getUserByTelegramId(telegramId: Long): WarcomUser {
         return userRepository.findByTelegramId(telegramId) ?: throw UserNotFoundException()
     }
 
@@ -22,6 +23,16 @@ class UserService
             this.username = userData.username
             this.telegramId = userData.telegramId
         }
+
+        return userRepository.save(user)
+    }
+
+    fun switchUserCommunity (telegramId: Long, communityCode: String): WarcomUser {
+        val user = getUserByTelegramId(telegramId)
+
+        val community = communityService.getCommunity(communityCode)
+
+        user.community = community
 
         return userRepository.save(user)
     }

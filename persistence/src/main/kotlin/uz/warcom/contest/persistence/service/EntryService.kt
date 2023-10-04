@@ -2,10 +2,7 @@ package uz.warcom.contest.persistence.service
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import uz.warcom.contest.persistence.domain.Contest
-import uz.warcom.contest.persistence.domain.Entry
-import uz.warcom.contest.persistence.domain.Image
-import uz.warcom.contest.persistence.domain.WarcomUser
+import uz.warcom.contest.persistence.domain.*
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.EntryNotFoundException
@@ -21,7 +18,7 @@ constructor(
 ){
 
     fun createEntry (user: WarcomUser): Entry {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+        val contest = contestService.currentContest(user.community!!) ?: throw ContestNotFoundException()
 
         val existing = getEntry(user, contest)
         if (existing != null)
@@ -35,13 +32,13 @@ constructor(
     }
 
     fun getCurrentEntry (user: WarcomUser): Entry {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+        val contest = contestService.currentContest(user.community!!) ?: throw ContestNotFoundException()
 
         return getEntry(user, contest) ?: throw EntryNotFoundException()
     }
 
-    fun getCurrentEntries (): List<Entry> {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+    fun getCurrentEntries (community: Community): List<Entry> {
+        val contest = contestService.currentContest(community) ?: throw ContestNotFoundException()
 
         return getEntries(contest)
     }

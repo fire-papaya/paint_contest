@@ -5,13 +5,17 @@ import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.objects.User
 import uz.warcom.contest.bot.exception.BotRequesterException
 import uz.warcom.contest.bot.model.*
+import uz.warcom.contest.bot.model.mapper.CommunityMapStruct
 import uz.warcom.contest.bot.model.mapper.EntryMapStruct
 import uz.warcom.contest.bot.model.mapper.UserMapStruct
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.dto.UserDto
+import uz.warcom.contest.persistence.exception.CommunityNotFoundException
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.UserNotFoundException
+import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
+import uz.warcom.contest.persistence.service.CommunityService
 import uz.warcom.contest.persistence.service.ContestService
 import uz.warcom.contest.persistence.service.EntryService
 import uz.warcom.contest.persistence.service.UserService
@@ -22,11 +26,22 @@ class PersistenceFacade
     private val entryService: EntryService,
     private val userService: UserService,
     private val contestService: ContestService,
+    private val communityService: CommunityService,
     private val userMapStruct: UserMapStruct,
-    private val entryMapStruct: EntryMapStruct
+    private val entryMapStruct: EntryMapStruct,
+    private val communityMapStruct: CommunityMapStruct
 ){
     fun getUser (telegramUser: User): UserData {
         return userMapStruct.toUserData(checkUser(telegramUser))
+    }
+
+    fun getCommunities(): List<CommunityData> {
+        return communityService.getCommunities().map { communityMapStruct.toCommunityData(it) }
+    }
+
+    fun switchUserCommunity(telegramUser: User, communityCode: String): UserData {
+        return userMapStruct.toUserData(
+            userService.switchUserCommunity(telegramUser.id, communityCode))
     }
 
     fun checkEntry (telegramUser: User): EntryData {
@@ -50,8 +65,10 @@ class PersistenceFacade
         return images.map { entryMapStruct.toImageData(it) }
     }
 
-    fun getEntries (): List<EntryData> {
-        val entries = entryService.getCurrentEntries()
+    fun getEntries (communityCode: String): List<EntryData> {
+        val community = communityService.getCommunity(communityCode) ?: throw CommunityNotFoundException()
+
+        val entries = entryService.getCurrentEntries(community)
 
         return entries.map { entryMapStruct.toEntryData(it) }
     }
@@ -69,18 +86,25 @@ class PersistenceFacade
         return checkEntry(imageToSave.telegramUser)
     }
 
-    fun getCurrentContest (): ContestData {
-        val contest = contestService.currentContest() ?: throw ContestNotFoundException()
+    fun getCurrentContest (telegramUser: User): ContestData {
+        val user = checkUser(telegramUser)
+
+        val contest = contestService.currentContest(user.community!!)
+            ?: throw ContestNotFoundException()
 
         return entryMapStruct.toContestData(contest)
     }
 
-    private fun checkUser (telegramUser: User): WarcomUser {
+    fun checkUser (telegramUser: User): WarcomUser {
         if (telegramUser.isBot)
             throw BotRequesterException()
 
         return try {
-            userService.getUserByTelegramId(telegramUser.id)
+            val user = userService.getUserByTelegramId(telegramUser.id)
+
+            if (user.community == null)
+                throw UserWithoutCommunityException()
+            user
         } catch (e: UserNotFoundException) {
             val username = if (telegramUser.userName.isNullOrBlank()) "user_${telegramUser.id}" else telegramUser.userName
             userService.createUser(UserDto(telegramId = telegramUser.id, username = username))

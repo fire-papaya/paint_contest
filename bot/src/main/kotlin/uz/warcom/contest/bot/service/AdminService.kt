@@ -10,8 +10,8 @@ import kotlin.random.Random
 class AdminService(
     private val persistenceFacade: PersistenceFacade
 ){
-    fun getEntriesSummary (): EntriesSummary {
-        val entriesData = persistenceFacade.getEntries()
+    fun getEntriesSummary (communityCode: String): EntriesSummary {
+        val entriesData = persistenceFacade.getEntries(communityCode)
 
         val entriesSummary = EntriesSummary()
 

@@ -20,6 +20,7 @@ import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
+import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
 
 
 @Component
@@ -39,11 +40,55 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 silent.send(
-                    "Привет! Это бот для подачи твоих работ на конкурс покраса от WarComUz.",
+                    "Привет! Это бот для подачи твоих работ на конкурс покраса от WarComUz. " +
+                            "Для начала выбери себе комьюнити используя команду `/communities`",
                     it.chatId()
                 )
             }
             .post { updateUserState(it.user().id, UserState.START) }
+            .build()
+    }
+
+    fun community () : Ability {
+        return Ability
+            .builder()
+            .name(Commands.COMMUNITIES)
+            .info("Show current community info and available communities")
+            .locality(Locality.ALL)
+            .privacy(Privacy.PUBLIC)
+            .action {   messageContext ->
+                val communityList = persistenceFacade.getCommunities()
+                val info_message = "На данный момент ты часть комьюнити " +
+                        try { persistenceFacade.getUser(messageContext.user()).community?.name ?: "бомжей" }
+                        catch (e: UserWithoutCommunityException) { "бомжей" } +
+                        " выбери себе комьюнити и используй его код вместе с командой \n/switch_community ," +
+                        " например: \n`/switch_community WRCM`"
+
+                val message = "Список доступных комьюнити:\nКод - Комьюнити\n" +
+                        communityList.map { it.label + "  -  " + it.name + "\n" }
+                            .joinToString(separator = "")
+
+
+                silent.send(message + "\n" + info_message, messageContext.chatId())
+            }
+            .build()
+    }
+
+    fun switchCommunity (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.SWITCH_COMMUNITY)
+            .info("Switch to a different community")
+            .locality(Locality.ALL)
+            .privacy(Privacy.PUBLIC)
+            .input(1)
+            .action {
+                val communityCode = it.firstArg()
+                val telegramUser = it.user()
+                val data = persistenceFacade.switchUserCommunity(telegramUser, communityCode)
+
+                silent.send("Твоё новое комьюнити: ${data.community?.name}", it.chatId())
+            }
             .build()
     }
 
@@ -61,6 +106,8 @@ class PaintContestBot
                             "работы на конкурс"
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
+                } catch (e: UserWithoutCommunityException) {
+                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
                 }
 
                 silent.send(message, it.chatId())
@@ -83,6 +130,8 @@ class PaintContestBot
                             "Если ранее была уже отправлена фотография, то она будет заменена на новую"
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
+                } catch (e: UserWithoutCommunityException) {
+                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
                 }
 
                 silent.send(message, it.chatId())
@@ -108,6 +157,8 @@ class PaintContestBot
                         "Отправь три изображения покрашенной миниатюры"
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
+                } catch (e: UserWithoutCommunityException) {
+                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
                 }
 
                 silent.send(
@@ -126,14 +177,24 @@ class PaintContestBot
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action { messageContext ->
+                try {
+                    val images = persistenceFacade.getEntryImages(messageContext.user())
+                    val sendAlbum = SendMediaGroup()
+                    sendAlbum.chatId = messageContext.chatId().toString()
+                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                    sendAlbum.medias[0].caption = "Вот твоя работа"
+                    // Execute the method
+                    execute(sendAlbum)
+                } catch (e: ContestNotFoundException) {
+                    silent.send(
+                        "На данный момент нет активных конкурсов, загляни позже",
+                        messageContext.chatId())
+                } catch (e: UserWithoutCommunityException) {
+                    silent.send(
+                        "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community",
+                        messageContext.chatId())
+                }
 
-                val images = persistenceFacade.getEntryImages(messageContext.user())
-                val sendAlbum = SendMediaGroup()
-                sendAlbum.chatId = messageContext.chatId().toString()
-                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
-                sendAlbum.medias[0].caption = "Вот твоя работа"
-                // Execute the method
-                execute(sendAlbum)
             }
             .build()
     }
@@ -147,9 +208,11 @@ class PaintContestBot
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
-                    persistenceFacade.getCurrentContest().toMessage()
+                    persistenceFacade.getCurrentContest(it.user()).toMessage()
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
+                } catch (e: UserWithoutCommunityException) {
+                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
                 }
 
                 silent.send(
@@ -166,8 +229,10 @@ class PaintContestBot
             .info("Retrieve information about current entries")
             .locality(Locality.ALL)
             .privacy(Privacy.ADMIN)
+            .input(1)
             .action { messageContext ->
-                val summary = adminService.getEntriesSummary()
+                val communityCode = messageContext.firstArg()
+                val summary = adminService.getEntriesSummary(communityCode)
                 val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
                 summary.usersMap.values.forEach {
                     messageBuffer.append(it.user)
