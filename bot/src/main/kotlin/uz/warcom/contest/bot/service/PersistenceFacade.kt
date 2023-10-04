@@ -11,6 +11,7 @@ import uz.warcom.contest.bot.model.mapper.UserMapStruct
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.dto.UserDto
+import uz.warcom.contest.persistence.exception.CommunityNotFoundException
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.UserNotFoundException
 import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
@@ -64,8 +65,10 @@ class PersistenceFacade
         return images.map { entryMapStruct.toImageData(it) }
     }
 
-    fun getEntries (): List<EntryData> {
-        val entries = entryService.getCurrentEntries()
+    fun getEntries (communityCode: String): List<EntryData> {
+        val community = communityService.getCommunity(communityCode) ?: throw CommunityNotFoundException()
+
+        val entries = entryService.getCurrentEntries(community)
 
         return entries.map { entryMapStruct.toEntryData(it) }
     }

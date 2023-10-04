@@ -229,8 +229,8 @@ class PaintContestBot
             .privacy(Privacy.ADMIN)
             .input(1)
             .action { messageContext ->
-                val communityCode = messageContext.firstArg().toIntOrNull()
-                val summary = adminService.getEntriesSummary()
+                val communityCode = messageContext.firstArg()
+                val summary = adminService.getEntriesSummary(communityCode)
                 val messageBuffer = StringBuffer().append("Общее кол-во заявок: " + summary.usersMap.size + "\n")
                 summary.usersMap.values.forEach {
                     messageBuffer.append(it.user)
