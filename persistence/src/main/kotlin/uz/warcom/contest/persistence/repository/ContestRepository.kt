@@ -9,11 +9,11 @@ import java.time.LocalDateTime
 @Repository
 interface ContestRepository: CrudRepository<Contest, Int> {
 
-    fun findByStartDateBeforeAndEndDateAfter(startDate: LocalDateTime, endDate: LocalDateTime): Contest?
-
     fun findByCommunityAndStartDateBeforeAndEndDateAfter(
         community: Community,
         startDate: LocalDateTime,
         endDate: LocalDateTime
     ): Contest?
+
+    fun findFirstByCommunityOrderByIdDesc(community: Community): Contest?
 }

@@ -11,15 +11,10 @@ class ContestService
 constructor(
     private val contestRepository: ContestRepository
 ){
-    fun currentContest (): Contest? {
-        return contestRepository.findByStartDateBeforeAndEndDateAfter(LocalDateTime.now(), LocalDateTime.now())
-    }
 
     fun currentContest(community: Community): Contest? {
-        return contestRepository.findByCommunityAndStartDateBeforeAndEndDateAfter(
-            community,
-            LocalDateTime.now(),
-            LocalDateTime.now()
+        return contestRepository.findFirstByCommunityOrderByIdDesc(
+            community
         )
     }
 }
