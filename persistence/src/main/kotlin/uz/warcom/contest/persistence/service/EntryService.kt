@@ -38,7 +38,7 @@ constructor(
     }
 
     fun getCurrentEntries (community: Community): List<Entry> {
-        val contest = contestService.currentContest(community) ?: throw ContestNotFoundException()
+        val contest = contestService.recentContest(community) ?: throw ContestNotFoundException()
 
         return getEntries(contest)
     }

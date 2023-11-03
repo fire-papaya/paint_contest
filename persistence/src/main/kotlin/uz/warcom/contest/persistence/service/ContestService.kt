@@ -13,8 +13,14 @@ constructor(
 ){
 
     fun currentContest(community: Community): Contest? {
-        return contestRepository.findFirstByCommunityOrderByIdDesc(
-            community
+        return contestRepository.findByCommunityAndStartDateBeforeAndEndDateAfter(
+            community,
+            LocalDateTime.now(),
+            LocalDateTime.now()
         )
+    }
+
+    fun recentContest(community: Community): Contest? {
+        return contestRepository.findFirstByCommunityOrderByIdDesc(community)
     }
 }
