@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.TelegramBotsApi
 import org.telegram.telegrambots.meta.generics.BotSession
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
+import uz.warcom.contest.bot.representation.ContestFlowBot
 import uz.warcom.contest.bot.representation.PaintContestBot
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
@@ -20,7 +21,7 @@ fun main(args: Array<String>) {
 
 @Component
 class BotStarter constructor(
-    private val bot: PaintContestBot
+    private val bot: ContestFlowBot
 ){
 
     private val api = TelegramBotsApi(DefaultBotSession::class.java)

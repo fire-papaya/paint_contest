@@ -23,9 +23,10 @@ import uz.warcom.contest.persistence.exception.ContestNotFoundException
 import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
 
 
-@Component
+//@Component
 class PaintContestBot
-@Autowired constructor(
+//@Autowired
+constructor(
     private val botConfiguration: BotConfiguration,
     private val persistenceFacade: PersistenceFacade,
     private val adminService: AdminService
