@@ -4,5 +4,10 @@ enum class UserState {
     START,
     CODE,
     PRIME,
-    READY
+    READY,
+
+    CREATE_CONTEST,
+    NAME_SENT,
+    DESCRIPTION_SENT,
+    DATE_SENT
 }
