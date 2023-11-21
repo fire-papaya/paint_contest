@@ -14,5 +14,7 @@ class Commands {
         const val ENTRIES = "entries"
         const val ENTRY = "entry"
         const val CROPPED = "cropped"
+        const val CREATE_CONTEST = "create"
+        const val UPDATE_CONTEST = "update"
     }
 }

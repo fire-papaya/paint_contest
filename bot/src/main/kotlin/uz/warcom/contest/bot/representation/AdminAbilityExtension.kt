@@ -2,12 +2,15 @@ package uz.warcom.contest.bot.representation
 
 import org.telegram.abilitybots.api.bot.AbilityBot
 import org.telegram.abilitybots.api.objects.Ability
+import org.telegram.abilitybots.api.objects.Flag
 import org.telegram.abilitybots.api.objects.Locality
 import org.telegram.abilitybots.api.objects.Privacy
 import org.telegram.abilitybots.api.util.AbilityExtension
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
+import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import uz.warcom.contest.bot.model.enum.Commands
+import uz.warcom.contest.bot.model.enum.UserState
 import uz.warcom.contest.bot.service.AdminService
 
 class AdminAbilityExtension (
@@ -15,6 +18,7 @@ class AdminAbilityExtension (
     private val adminService: AdminService
 ): AbilityExtension {
     private val silent = bot.silent()
+    private val db = bot.db()
 
     fun entries () : Ability {
         return Ability
@@ -63,5 +67,60 @@ class AdminAbilityExtension (
                 }
             }
             .build()
+    }
+
+    fun createContest (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.CREATE_CONTEST)
+            .info("Create new contest")
+            .locality(Locality.USER)
+            .privacy(Privacy.ADMIN)
+            .action { messageContext ->
+                updateUserState(messageContext.user().id, UserState.CREATE_CONTEST)
+            }
+            .build()
+    }
+
+    fun updateContest (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.UPDATE_CONTEST)
+            .info("Update new contest")
+            .locality(Locality.USER)
+            .privacy(Privacy.ADMIN)
+            .input(1)
+            .action { messageContext ->
+                updateUserState(messageContext.user().id, UserState.CREATE_CONTEST)
+            }
+            .build()
+    }
+
+    fun processTextMessage (): Ability {
+        return Ability
+            .builder()
+            .name(Commands.CREATE_CONTEST)
+            .info("Retrieve entry images")
+            .locality(Locality.USER)
+            .privacy(Privacy.ADMIN)
+            .flag(Flag.MESSAGE)
+            .action { messageContext ->
+            /* Todo implement logic for processing names etc. */
+            }
+            .build()
+    }
+
+    private fun updateUserState (userId: Long, state: UserState) {
+        db.getMap<String, Any>("USER_STATES").entries.forEach{ ent -> println("${ent.key} : ${ent.value}") }
+        val states: MutableMap<String, String> = db.getMap("USER_STATES")
+        states[userId.toString()] = state.toString()
+    }
+
+    private fun userState (userId: Long): UserState {
+        return UserState.valueOf(db.getMap<String, String>("USER_STATES").getOrDefault(userId.toString(), "START"))
+    }
+
+    private fun userState(update: Update): UserState {
+        return this.userState(update.message.from.id)
     }
 }
