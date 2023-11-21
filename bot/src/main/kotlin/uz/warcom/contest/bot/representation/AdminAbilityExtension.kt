@@ -21,7 +21,7 @@ class AdminAbilityExtension (
             .builder()
             .name(Commands.ENTRIES)
             .info("Retrieve information about current entries")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.ADMIN)
             .input(1)
             .action { messageContext ->
@@ -46,7 +46,7 @@ class AdminAbilityExtension (
             .builder()
             .name(Commands.ENTRY)
             .info("Retrieve entry images")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.ADMIN)
             .input(1)
             .action { messageContext ->

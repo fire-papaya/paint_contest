@@ -69,7 +69,7 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.SWITCH_COMMUNITY)
             .info("Switch to a different community")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .input(1)
             .action {
@@ -87,11 +87,12 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.CODE)
             .info("Generate code for submission")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
                     val entry = persistenceFacade.checkEntry(it.user())
+                    updateUserState(it.user().id, UserState.PRIME)
                     "Твой код: ${entry.code}, используй команду /${Commands.PRIME} для продолжения процесса подачи " +
                             "работы на конкурс"
                 } catch (e: ContestNotFoundException) {
@@ -102,7 +103,6 @@ class PublicAbilityExtension (
 
                 silent.send(message, it.chatId())
             }
-            .post { updateUserState(it.user().id, UserState.CODE) }
             .build()
     }
 
@@ -111,11 +111,12 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.PRIME)
             .info("Prompt to submit primed miniature")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
                     val entry = persistenceFacade.checkEntry(it.user())
+                    updateUserState(it.user().id, UserState.READY)
                     "Отправь изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}. " +
                             "Если ранее была уже отправлена фотография, то она будет заменена на новую"
                 } catch (e: ContestNotFoundException) {
@@ -126,7 +127,6 @@ class PublicAbilityExtension (
 
                 silent.send(message, it.chatId())
             }
-            .post { updateUserState(it.user().id, UserState.PRIME) }
             .build()
     }
 
@@ -135,7 +135,7 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.READY)
             .info("Prompt to submit finished miniature")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
@@ -164,7 +164,7 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.CHECK)
             .info("Review current submission")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .action { messageContext ->
                 try {
@@ -194,7 +194,7 @@ class PublicAbilityExtension (
             .builder()
             .name(Commands.CONTEST)
             .info("Retrieve current contest")
-            .locality(Locality.ALL)
+            .locality(Locality.USER)
             .privacy(Privacy.PUBLIC)
             .action {
                 val message = try {
