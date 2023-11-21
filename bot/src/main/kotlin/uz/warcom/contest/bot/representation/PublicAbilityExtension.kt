@@ -79,6 +79,7 @@ class PublicAbilityExtension (
 
                 silent.send("Твоё новое комьюнити: ${data.community?.name}", it.chatId())
             }
+            .post { updateUserState(it.user().id, UserState.START) }
             .build()
     }
 
@@ -92,7 +93,7 @@ class PublicAbilityExtension (
             .action {
                 val message = try {
                     val entry = persistenceFacade.checkEntry(it.user())
-                    updateUserState(it.user().id, UserState.PRIME)
+                    updateUserState(it.user().id, UserState.PRIMED)
                     "Твой код: ${entry.code}, используй команду /${Commands.PRIME} для продолжения процесса подачи " +
                             "работы на конкурс"
                 } catch (e: ContestNotFoundException) {
@@ -116,7 +117,7 @@ class PublicAbilityExtension (
             .action {
                 val message = try {
                     val entry = persistenceFacade.checkEntry(it.user())
-                    updateUserState(it.user().id, UserState.READY)
+                    updateUserState(it.user().id, UserState.PRIMED)
                     "Отправь изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}. " +
                             "Если ранее была уже отправлена фотография, то она будет заменена на новую"
                 } catch (e: ContestNotFoundException) {
@@ -141,10 +142,13 @@ class PublicAbilityExtension (
                 val message = try {
                     val entry = persistenceFacade.checkEntry(it.user())
 
-                    if (entry.images.find { img -> !img.isReady } == null)
-                        "Сначала загрузи изображение собранной и/или загрунтованной миниатюры, используя команду /${Commands.PRIME}"
-                    else
+                    if (entry.images.find { img -> !img.isReady } == null) {
+                        updateUserState(it.user().id, UserState.PRIMED)
+                        "Сначала загрузи изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}"
+                    } else {
+                        updateUserState(it.user().id, UserState.PAINTED)
                         "Отправь три изображения покрашенной миниатюры"
+                    }
                 } catch (e: ContestNotFoundException) {
                     "На данный момент нет активных конкурсов, загляни позже"
                 } catch (e: UserWithoutCommunityException) {
@@ -155,7 +159,6 @@ class PublicAbilityExtension (
                     message, it.chatId()
                 )
             }
-            .post { updateUserState(it.user().id, UserState.READY) }
             .build()
     }
 

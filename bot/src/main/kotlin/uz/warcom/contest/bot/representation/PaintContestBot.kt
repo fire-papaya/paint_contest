@@ -36,7 +36,7 @@ constructor(
         return PublicAbilityExtension(this, persistenceFacade)
     }
 
-    private val contestStates = setOf(UserState.PRIME, UserState.READY)
+    private val contestStates = setOf(UserState.PRIMED, UserState.PAINTED)
 
     fun processImage(): Ability {
         return Ability.builder()
@@ -52,12 +52,12 @@ constructor(
 
                     val entry = persistenceFacade.postPicture(ImageToSave(
                         it.user(),
-                        state == UserState.READY,
+                        state == UserState.PAINTED,
                         photo.fileId
                     ))
 
-                    val message = if (state == UserState.PRIME) {
-                        updateUserState(it.user().id, UserState.READY)
+                    val message = if (state == UserState.PRIMED) {
+                        updateUserState(it.user().id, UserState.PAINTED)
                         "Изображение получено. Отправь три изображения покрашенной миниатюры, когда закончишь покрас"
                     } else {
                         "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3"
