@@ -17,3 +17,5 @@ class CommunityNotFoundException(): NotFoundException("Community was not found")
 class UserNotAdminException(): LogicException("User is not an admin")
 
 class NotCommunityAdminException(): LogicException("User is not an admin of a community")
+
+class DraftContestNotCreated(): NotFoundException("Draft contests were not found")

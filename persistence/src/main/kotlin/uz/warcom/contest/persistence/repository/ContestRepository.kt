@@ -16,4 +16,6 @@ interface ContestRepository: CrudRepository<Contest, Int> {
     ): Contest?
 
     fun findFirstByCommunityOrderByIdDesc(community: Community): Contest?
+
+    fun findFirstByCommunityAndDraftIsTrueOrderByIdDesc(community: Community): Contest?
 }

@@ -27,4 +27,8 @@ constructor(
     fun createContest(contest: Contest): Contest {
         return contestRepository.save(contest)
     }
+
+    fun communityDraftContest(community: Community): Contest? {
+        return contestRepository.findFirstByCommunityAndDraftIsTrueOrderByIdDesc(community)
+    }
 }

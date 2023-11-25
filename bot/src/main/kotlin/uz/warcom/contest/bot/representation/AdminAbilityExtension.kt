@@ -105,7 +105,16 @@ class AdminAbilityExtension (
             .privacy(Privacy.ADMIN)
             .flag(Flag.MESSAGE)
             .action { messageContext ->
-            /* Todo implement logic for processing names etc. */
+                val userId = messageContext.user().id
+
+                val state = userState(userId)
+
+                when(state) {
+                    UserState.CREATE_CONTEST -> TODO("Implement creation")
+                    UserState.NAME_SENT -> TODO("Implement name editing")
+                    UserState.DESCRIPTION_SENT -> TODO("Implement descr editing")
+                    UserState.DATE_SENT -> TODO("Implement date editting")
+                }
             }
             .build()
     }

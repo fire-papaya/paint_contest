@@ -8,13 +8,12 @@ import uz.warcom.contest.bot.model.*
 import uz.warcom.contest.bot.model.mapper.CommunityMapStruct
 import uz.warcom.contest.bot.model.mapper.EntryMapStruct
 import uz.warcom.contest.bot.model.mapper.UserMapStruct
+import uz.warcom.contest.persistence.domain.Community
+import uz.warcom.contest.persistence.domain.Contest
 import uz.warcom.contest.persistence.domain.WarcomUser
 import uz.warcom.contest.persistence.dto.ImageDto
 import uz.warcom.contest.persistence.dto.UserDto
-import uz.warcom.contest.persistence.exception.CommunityNotFoundException
-import uz.warcom.contest.persistence.exception.ContestNotFoundException
-import uz.warcom.contest.persistence.exception.UserNotFoundException
-import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
+import uz.warcom.contest.persistence.exception.*
 import uz.warcom.contest.persistence.service.CommunityService
 import uz.warcom.contest.persistence.service.ContestService
 import uz.warcom.contest.persistence.service.EntryService
@@ -95,6 +94,17 @@ class PersistenceFacade
         return entryMapStruct.toContestData(contest)
     }
 
+    fun getCurrentDraftContest (communityCode: String): ContestData? {
+        val community = communityService.getCommunity(communityCode) ?: throw CommunityNotFoundException()
+
+        return contestService.communityDraftContest(community)
+            ?.let { entryMapStruct.toContestData(it) }
+    }
+
+    fun createContest(contest: Contest): ContestData {
+        return entryMapStruct.toContestData(contestService.createContest(contest))
+    }
+
     fun checkUser (telegramUser: User): WarcomUser {
         if (telegramUser.isBot)
             throw BotRequesterException()
@@ -109,5 +119,26 @@ class PersistenceFacade
             val username = if (telegramUser.userName.isNullOrBlank()) "user_${telegramUser.id}" else telegramUser.userName
             userService.createUser(UserDto(telegramId = telegramUser.id, username = username))
         }
+    }
+
+    fun checkAdmin (telegramUser: User): WarcomUser {
+        if (telegramUser.isBot)
+            throw BotRequesterException()
+
+        val user = checkUser(telegramUser)
+
+        if (user.community == null)
+            throw UserWithoutCommunityException()
+
+        if (!user.isAdmin)
+            throw UserNotAdminException()
+
+        return user
+    }
+
+    fun fetchAdminCommunities(telegramUser: User): List<Community> {
+        val admin = checkAdmin(telegramUser)
+
+        return communityService.getAdminCommunities(admin)
     }
 }
