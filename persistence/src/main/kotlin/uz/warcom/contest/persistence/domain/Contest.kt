@@ -20,4 +20,6 @@ class Contest : AbstractIntEntity() {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id")
     var community: Community? = null
+
+    var isDraft: Boolean = false
 }
