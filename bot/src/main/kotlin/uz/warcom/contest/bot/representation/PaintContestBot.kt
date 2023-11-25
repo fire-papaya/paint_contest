@@ -14,7 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.Update
 import uz.warcom.contest.bot.config.BotConfiguration
 import uz.warcom.contest.bot.exception.BotException
 import uz.warcom.contest.bot.model.ImageToSave
-import uz.warcom.contest.bot.model.enum.UserState
+import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.service.PersistenceFacade
 

@@ -1,4 +1,4 @@
-package uz.warcom.contest.bot.model.enum
+package uz.warcom.contest.bot.model.enums
 
 class Commands {
     companion object {

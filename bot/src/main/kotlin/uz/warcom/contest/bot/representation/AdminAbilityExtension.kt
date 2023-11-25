@@ -9,8 +9,8 @@ import org.telegram.abilitybots.api.util.AbilityExtension
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
-import uz.warcom.contest.bot.model.enum.Commands
-import uz.warcom.contest.bot.model.enum.UserState
+import uz.warcom.contest.bot.model.enums.Commands
+import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.AdminService
 
 class AdminAbilityExtension (
