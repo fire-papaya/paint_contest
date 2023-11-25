@@ -19,4 +19,6 @@ interface EntryMapStruct {
     fun toImageData (entity: Image): ImageData
 
     fun toContestData (entity: Contest): ContestData
+
+    fun toContest (contestData: ContestData): Contest
 }

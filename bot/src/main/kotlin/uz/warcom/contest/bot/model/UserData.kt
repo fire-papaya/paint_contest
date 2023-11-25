@@ -5,4 +5,5 @@ data class UserData(
     var id: Int,
     var telegramId: Long,
     var community: CommunityData? = null,
+    var isAdmin: Boolean = false
 )

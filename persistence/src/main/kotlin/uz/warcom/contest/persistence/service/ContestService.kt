@@ -23,4 +23,8 @@ constructor(
     fun recentContest(community: Community): Contest? {
         return contestRepository.findFirstByCommunityOrderByIdDesc(community)
     }
+
+    fun createContest(contest: Contest): Contest {
+        return contestRepository.save(contest)
+    }
 }
