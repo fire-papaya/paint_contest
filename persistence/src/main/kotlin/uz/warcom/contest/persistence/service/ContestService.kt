@@ -29,6 +29,6 @@ constructor(
     }
 
     fun communityDraftContest(community: Community): Contest? {
-        return contestRepository.findFirstByCommunityAndDraftIsTrueOrderByIdDesc(community)
+        return contestRepository.findFirstByCommunityAndDraftOrderByIdDesc(community, false)
     }
 }

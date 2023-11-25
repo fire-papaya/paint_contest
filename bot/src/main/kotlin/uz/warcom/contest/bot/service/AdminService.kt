@@ -60,7 +60,7 @@ class AdminService(
             this.description = "placeholder"
             this.startDate = LocalDateTime.now()
             this.endDate = LocalDateTime.now()
-            this.isDraft = true
+            this.draft = true
         }
 
         return persistenceFacade.createContest(draft)
