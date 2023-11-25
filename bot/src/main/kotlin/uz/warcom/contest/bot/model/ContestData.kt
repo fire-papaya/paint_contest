@@ -4,11 +4,12 @@ import uz.warcom.contest.bot.util.DateHelper
 import java.time.LocalDateTime
 
 data class ContestData(
-    var name: String? = null,
-    var description: String? = null,
+    var name: String = "placeholder",
+    var description: String = "placeholder",
     var id: Int? = null,
-    var startDate: LocalDateTime? = null,
-    var endDate: LocalDateTime? = null
+    var startDate: LocalDateTime = LocalDateTime.now(),
+    var endDate: LocalDateTime = LocalDateTime.now(),
+    var communityData: CommunityData? = null,
 ) {
     fun toMessage (): String {
         return "Конкурс: $name \n" +
