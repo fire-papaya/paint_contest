@@ -19,3 +19,7 @@ class UserNotAdminException(): LogicException("User is not an admin")
 class NotCommunityAdminException(): LogicException("User is not an admin of a community")
 
 class DraftContestNotCreated(): NotFoundException("Draft contests were not found")
+
+class NoPrimedImageException(): LogicException("Primed image were not received")
+
+class NoPaintedImageException(): LogicException("Painted images were not received")

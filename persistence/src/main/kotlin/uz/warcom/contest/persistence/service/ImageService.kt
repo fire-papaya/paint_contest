@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service
 import uz.warcom.contest.persistence.domain.Entry
 import uz.warcom.contest.persistence.domain.Image
 import uz.warcom.contest.persistence.dto.ImageDto
+import uz.warcom.contest.persistence.exception.NoPaintedImageException
+import uz.warcom.contest.persistence.exception.NoPrimedImageException
 import uz.warcom.contest.persistence.repository.ImageRepository
 import java.util.*
 import java.util.stream.Collectors
@@ -39,12 +41,11 @@ class ImageService (
 
     fun getEntryImages (entry: Entry): List<Image> {
         val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
-        // Todo proper exception
-        val primed = images.lastOrNull { !it.isReady } ?: throw RuntimeException()
 
-        // Todo proper exception
+        val primed = images.lastOrNull { !it.isReady } ?: throw NoPrimedImageException()
+
         val painted = images.filter { it.isReady }.take(3).takeIf { it.size == 3 }?.toMutableList()
-            ?: throw RuntimeException()
+            ?: throw NoPaintedImageException()
 
         painted.add(primed)
 
