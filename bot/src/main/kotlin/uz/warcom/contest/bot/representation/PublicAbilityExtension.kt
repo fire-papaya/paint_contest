@@ -6,11 +6,13 @@ import org.telegram.abilitybots.api.objects.*
 import org.telegram.abilitybots.api.util.AbilityExtension
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.objects.PhotoSize
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import uz.warcom.contest.bot.model.ImageToSave
 import uz.warcom.contest.bot.model.enums.ButtonLabel
 import uz.warcom.contest.bot.model.enums.Commands
 import uz.warcom.contest.bot.model.enums.EmojiCmd
@@ -25,6 +27,7 @@ class PublicAbilityExtension (
 ): AbilityExtension {
     private val silent = bot.silent()
     private val db = bot.db()
+    private val contestStates = setOf(UserState.PRIMED, UserState.PAINTED)
 
     fun start () : Ability {
         return Ability
@@ -175,6 +178,34 @@ class PublicAbilityExtension (
         return Reply.of(action, startsWith(EmojiCmd.PAINTED))
     }
 
+    fun processImage(): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val state = userState(upd)
+            val photo = retrieveHighestQuality(upd.message.photo)
+
+            val entry = persistenceFacade.postPicture(
+                ImageToSave(user, state == UserState.PRIMED, photo.fileId)
+            )
+
+            val text = if (state == UserState.CODE) {
+                updateUserState(user.id, UserState.PRIMED)
+                "Изображение получено. Отправь три изображения покрашенной миниатюры, когда закончишь покрас"
+            } else {
+                "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3. Заявка готова и подана"
+            }
+
+            if (entry.images.filter { img -> img.isReady }.size == 3)
+                updateUserState(user.id, UserState.PAINTED)
+
+            val message = entryMenuMessage(user, text)
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, Flag.PHOTO.and { userState(it) in contestStates })
+    }
+
     fun check () : Reply {
         val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
             val user = extractUser(upd)
@@ -288,5 +319,19 @@ class PublicAbilityExtension (
         db.getMap<String, Any>("USER_STATES").entries.forEach{ ent -> println("${ent.key} : ${ent.value}") }
         val states: MutableMap<String, String> = db.getMap("USER_STATES")
         states[userId.toString()] = state.toString()
+    }
+
+    private fun userState (userId: Long): UserState {
+        return UserState.valueOf(db.getMap<String, String>("USER_STATES").getOrDefault(userId.toString(), "START"))
+    }
+
+    private fun userState(update: Update): UserState {
+        return this.userState(update.message.from.id)
+    }
+
+    private fun retrieveHighestQuality(photos: List<PhotoSize>): PhotoSize {
+        return photos.stream()
+            .max(Comparator.comparing { obj: PhotoSize -> obj.fileSize })
+            .orElseThrow { IllegalStateException("No photos were found in photos stream") }
     }
 }
