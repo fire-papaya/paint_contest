@@ -11,13 +11,12 @@ import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
-import uz.warcom.contest.bot.main
+import uz.warcom.contest.bot.model.enums.ButtonLabel
 import uz.warcom.contest.bot.model.enums.Commands
 import uz.warcom.contest.bot.model.enums.EmojiCmd
 import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.PersistenceFacade
-import uz.warcom.contest.persistence.exception.ContestNotFoundException
-import uz.warcom.contest.persistence.exception.UserWithoutCommunityException
+import uz.warcom.contest.persistence.exception.*
 
 
 class PublicAbilityExtension (
@@ -92,7 +91,7 @@ class PublicAbilityExtension (
     fun switchCommunity (): Reply {
         val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
             val communityCode = upd.message.text.split(" ").filter { it.isNotEmpty() }[1]
-            val telegramUser = upd.message.from
+            val telegramUser = extractUser(upd)
 
             val data = persistenceFacade.switchUserCommunity(telegramUser, communityCode)
 
@@ -103,34 +102,6 @@ class PublicAbilityExtension (
         }
 
         return Reply.of(action, startsWith(EmojiCmd.SWITCH_COMMUNITY))
-    }
-
-    fun startsWith(flag: String): (Update) -> Boolean {
-        return {
-                upd: Update -> upd.message?.text?.startsWith("$flag ") ?: false
-        }
-    }
-
-    private fun mainMenuMessage (user: User, text: String = "Главное меню") : SendMessage {
-        val message = SendMessage()
-
-        val keyboard = ReplyKeyboardMarkup()
-
-        val row1 = KeyboardRow().also {
-            it.add("${EmojiCmd.CONTEST} Current Contest")
-            it.add("${EmojiCmd.SUBMISSION} My submission")
-        }
-
-        val row2 =  KeyboardRow().also {
-            it.add("${EmojiCmd.COMMUNITY} My community")
-        }
-
-        keyboard.keyboard = arrayListOf(row1, row2)
-
-        message.replyMarkup = keyboard
-        message.chatId = user.id.toString()
-        message.text = text
-        return message
     }
 
     fun code () : Ability {
@@ -212,57 +183,111 @@ class PublicAbilityExtension (
             .build()
     }
 
-    fun check () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.CHECK)
-            .info("Review current submission")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .action { messageContext ->
-                try {
-                    val images = persistenceFacade.getEntryImages(messageContext.user())
-                    val sendAlbum = SendMediaGroup()
-                    sendAlbum.chatId = messageContext.chatId().toString()
-                    sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
-                    sendAlbum.medias[0].caption = "Вот твоя работа"
-                    // Execute the method
-                    bot.execute(sendAlbum)
-                } catch (e: ContestNotFoundException) {
-                    silent.send(
-                        "На данный момент нет активных конкурсов, загляни позже",
-                        messageContext.chatId())
-                } catch (e: UserWithoutCommunityException) {
-                    silent.send(
-                        "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community",
-                        messageContext.chatId())
-                }
+    fun check () : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val message = try {
+                val images = persistenceFacade.getEntryImages(extractUser(upd))
+                val sendAlbum = SendMediaGroup()
+                sendAlbum.chatId = extractUser(upd).id.toString()
+                sendAlbum.medias = images.map { InputMediaPhoto(it.telegramFileId!!) }
+                sendAlbum.medias[0].caption = "Вот твоя работа"
 
+                bot.executeAsync(sendAlbum)
+                entryMenuMessage(user, "Ты можешь заменить фотографии, используя соответствующие кнопки")
+            } catch (e: EntryNotFoundException) {
+                entryMenuMessage(user, "Для создания заявки сгенерируй код, используя ${ButtonLabel.CODE}")
+            } catch (e: NoPrimedImageException) {
+                entryMenuMessage(user, "Отправь изображение непокрашенной модели")
+            } catch (e: NoPaintedImageException) {
+                entryMenuMessage(user, "Отправь 3 изображения покрашенной модели")
+            } catch (e: ContestNotFoundException) {
+                mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
+            } catch (e: UserWithoutCommunityException) {
+                mainMenuMessage(user, "Ты не привязан к комьюнити. Выбери комьюнити в разделе ${ButtonLabel.COMMUNITY}")
             }
-            .build()
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.SUBMISSION))
     }
 
-    fun contest () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.CONTEST)
-            .info("Retrieve current contest")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .action {
-                val message = try {
-                    persistenceFacade.getCurrentContest(it.user()).toMessage()
-                } catch (e: ContestNotFoundException) {
-                    "На данный момент нет активных конкурсов, загляни позже"
-                } catch (e: UserWithoutCommunityException) {
-                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
-                }
-
-                silent.send(
-                    message, it.chatId()
-                )
+    fun contest () : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val message = try {
+                persistenceFacade.getCurrentContest(extractUser(upd)).toMessage()
+            } catch (e: ContestNotFoundException) {
+                "На данный момент нет активных конкурсов, загляни позже"
+            } catch (e: UserWithoutCommunityException) {
+                "Ты не привязан к комьюнити. Выбери комьюнити в разделе \"${EmojiCmd.COMMUNITY} Мой комьюнити\""
             }
-            .build()
+
+            silent.send(message, extractUser(upd).id)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.CONTEST))
+    }
+
+    fun startsWith(flag: String): (Update) -> Boolean {
+        return {
+                upd: Update -> upd.message?.text?.startsWith("$flag ") ?: false
+        }
+    }
+
+    private fun mainMenuMessage (user: User, text: String = "Главное меню") : SendMessage {
+        val message = SendMessage()
+
+        val keyboard = ReplyKeyboardMarkup()
+
+        val row1 = KeyboardRow().also {
+            it.add(ButtonLabel.CONTEST)
+            it.add(ButtonLabel.SUBMISSION)
+        }
+
+        val row2 =  KeyboardRow().also {
+            it.add(ButtonLabel.COMMUNITY)
+        }
+
+        keyboard.keyboard = arrayListOf(row1, row2)
+        keyboard.resizeKeyboard = true
+
+        message.replyMarkup = keyboard
+        message.chatId = user.id.toString()
+        message.text = text
+        return message
+    }
+
+    private fun entryMenuMessage (user: User, text: String): SendMessage {
+        val message = SendMessage()
+
+        val keyboard = ReplyKeyboardMarkup()
+
+        val row1 = KeyboardRow().also {
+            it.add(ButtonLabel.SUBMISSION)
+            it.add(ButtonLabel.CODE)
+        }
+
+        val row2 =  KeyboardRow().also {
+            it.add(ButtonLabel.PRIMED)
+            it.add(ButtonLabel.PAINTED)
+        }
+
+        val row3 =  KeyboardRow().also {
+            it.add(ButtonLabel.HOME)
+        }
+
+        keyboard.keyboard = arrayListOf(row1, row2, row3)
+        keyboard.resizeKeyboard = true
+
+        message.replyMarkup = keyboard
+        message.chatId = user.id.toString()
+        message.text = text
+        return message
+    }
+
+    private fun extractUser (update: Update): User {
+        return update.message.from
     }
 
     private fun updateUserState (userId: Long, state: UserState) {
