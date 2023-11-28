@@ -104,83 +104,75 @@ class PublicAbilityExtension (
         return Reply.of(action, startsWith(EmojiCmd.SWITCH_COMMUNITY))
     }
 
-    fun code () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.CODE)
-            .info("Generate code for submission")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .action {
-                val message = try {
-                    val entry = persistenceFacade.checkEntry(it.user())
-                    updateUserState(it.user().id, UserState.PRIMED)
-                    "Твой код: ${entry.code}, используй команду /${Commands.PRIME} для продолжения процесса подачи " +
-                            "работы на конкурс"
-                } catch (e: ContestNotFoundException) {
-                    "На данный момент нет активных конкурсов, загляни позже"
-                } catch (e: UserWithoutCommunityException) {
-                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
-                }
+    fun code () : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val message = try {
+                val entry = persistenceFacade.checkEntry(user)
 
-                silent.send(message, it.chatId())
+                updateUserState(user.id, UserState.CODE)
+                val text = "Твой код: ${entry.code}, Отправь изображение собранной и/или загрунтованной миниатюры с " +
+                        "кодом  для продолжения процесса подачи заявки на конкурс"
+                entryMenuMessage(user, text)
+            } catch (e: ContestNotFoundException) {
+                mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
+            } catch (e: UserWithoutCommunityException) {
+                mainMenuMessage(user, "Ты не привязан к комьюнити. Выбери комьюнити в разделе ${ButtonLabel.COMMUNITY}")
             }
-            .build()
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.CODE))
     }
 
-    fun prime () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.PRIME)
-            .info("Prompt to submit primed miniature")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .action {
-                val message = try {
-                    val entry = persistenceFacade.checkEntry(it.user())
-                    updateUserState(it.user().id, UserState.PRIMED)
-                    "Отправь изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}. " +
-                            "Если ранее была уже отправлена фотография, то она будет заменена на новую"
-                } catch (e: ContestNotFoundException) {
-                    "На данный момент нет активных конкурсов, загляни позже"
-                } catch (e: UserWithoutCommunityException) {
-                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
-                }
+    fun prime () : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val message = try {
+                val entry = persistenceFacade.checkEntry(user)
 
-                silent.send(message, it.chatId())
+                updateUserState(user.id, UserState.CODE)
+                val text = "Отправь изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}" +
+                        " для продолжения процесса подачи заявки на конкурс"
+                entryMenuMessage(user, text)
+            } catch (e: ContestNotFoundException) {
+                mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
+            } catch (e: UserWithoutCommunityException) {
+                mainMenuMessage(user, "Ты не привязан к комьюнити. Выбери комьюнити в разделе ${ButtonLabel.COMMUNITY}")
             }
-            .build()
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.PRIMED))
     }
 
-    fun ready () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.READY)
-            .info("Prompt to submit finished miniature")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .action {
-                val message = try {
-                    val entry = persistenceFacade.checkEntry(it.user())
+    fun painted () : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val message = try {
+                val entry = persistenceFacade.checkEntry(user)
 
-                    if (entry.images.find { img -> !img.isReady } == null) {
-                        updateUserState(it.user().id, UserState.PRIMED)
-                        "Сначала загрузи изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}"
-                    } else {
-                        updateUserState(it.user().id, UserState.PAINTED)
-                        "Отправь три изображения покрашенной миниатюры"
-                    }
-                } catch (e: ContestNotFoundException) {
-                    "На данный момент нет активных конкурсов, загляни позже"
-                } catch (e: UserWithoutCommunityException) {
-                    "Ты не привязан ни к одному из существующих комьюнити. Выбери комьюнити используя команду /community"
+                val text = if (entry.images.find { img -> !img.isReady } == null) {
+                    updateUserState(user.id, UserState.CODE)
+                    "Сначала загрузи изображение собранной и/или загрунтованной миниатюры с кодом ${entry.code}"
+                } else {
+                    updateUserState(user.id, UserState.PRIMED)
+                    "Отправь три изображения покрашенной миниатюры"
                 }
 
-                silent.send(
-                    message, it.chatId()
-                )
+                entryMenuMessage(user, text)
+            } catch (e: ContestNotFoundException) {
+                mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
+            } catch (e: UserWithoutCommunityException) {
+                mainMenuMessage(user, "Ты не привязан к комьюнити. Выбери комьюнити в разделе ${ButtonLabel.COMMUNITY}")
             }
-            .build()
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.PAINTED))
     }
 
     fun check () : Reply {
@@ -198,8 +190,10 @@ class PublicAbilityExtension (
             } catch (e: EntryNotFoundException) {
                 entryMenuMessage(user, "Для создания заявки сгенерируй код, используя ${ButtonLabel.CODE}")
             } catch (e: NoPrimedImageException) {
+                updateUserState(user.id, UserState.CODE)
                 entryMenuMessage(user, "Отправь изображение непокрашенной модели")
             } catch (e: NoPaintedImageException) {
+                updateUserState(user.id, UserState.PRIMED)
                 entryMenuMessage(user, "Отправь 3 изображения покрашенной модели")
             } catch (e: ContestNotFoundException) {
                 mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
