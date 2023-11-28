@@ -1,13 +1,19 @@
 package uz.warcom.contest.bot.representation
 
 import org.telegram.abilitybots.api.bot.AbilityBot
-import org.telegram.abilitybots.api.objects.Ability
-import org.telegram.abilitybots.api.objects.Locality
-import org.telegram.abilitybots.api.objects.Privacy
+import org.telegram.abilitybots.api.bot.BaseAbilityBot
+import org.telegram.abilitybots.api.objects.*
 import org.telegram.abilitybots.api.util.AbilityExtension
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import uz.warcom.contest.bot.main
 import uz.warcom.contest.bot.model.enums.Commands
+import uz.warcom.contest.bot.model.enums.EmojiCmd
 import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.PersistenceFacade
 import uz.warcom.contest.persistence.exception.ContestNotFoundException
@@ -29,58 +35,102 @@ class PublicAbilityExtension (
             .locality(Locality.ALL)
             .privacy(Privacy.PUBLIC)
             .action {
-                silent.send(
-                    "Привет! Это бот для подачи твоих работ на конкурс покраса от WarComUz. " +
-                            "Для начала выбери себе комьюнити используя команду `/communities`",
-                    it.chatId()
-                )
-            }
-            .post { updateUserState(it.user().id, UserState.START) }
-            .build()
-    }
+                updateUserState(it.user().id, UserState.START)
 
-    fun community () : Ability {
-        return Ability
-            .builder()
-            .name(Commands.COMMUNITIES)
-            .info("Show current community info and available communities")
-            .locality(Locality.ALL)
-            .privacy(Privacy.PUBLIC)
-            .action {  messageContext ->
-                val communityList = persistenceFacade.getCommunities()
-                val info_message = "На данный момент ты часть комьюнити " +
-                        try { persistenceFacade.getUser(messageContext.user()).community?.name ?: "бомжей" }
-                        catch (e: UserWithoutCommunityException) { "бомжей" } +
-                        " выбери себе комьюнити и используй его код вместе с командой \n/switch_community ," +
-                        " например: \n`/switch_community WRCM`"
+                val messageText = "Это бот для подачи твоих работ на конкурсы покраса от WarComUz. " +
+                        "Если ты еще не состоишь ни в одном комьюнити, выбери один в разделе " +
+                        "${EmojiCmd.COMMUNITY} Мой комьюнити\""
 
-                val message = "Список доступных комьюнити:\nКод - Комьюнити\n" +
-                        communityList.map { it.label + "  -  " + it.name + "\n" }
-                            .joinToString(separator = "")
+                val sendMessage = mainMenuMessage(it.user(), messageText)
 
-
-                silent.send(message + "\n" + info_message, messageContext.chatId())
+                bot.execute(sendMessage)
             }
             .build()
     }
 
-    fun switchCommunity (): Ability {
-        return Ability
-            .builder()
-            .name(Commands.SWITCH_COMMUNITY)
-            .info("Switch to a different community")
-            .locality(Locality.USER)
-            .privacy(Privacy.PUBLIC)
-            .input(1)
-            .action {
-                val communityCode = it.firstArg()
-                val telegramUser = it.user()
-                val data = persistenceFacade.switchUserCommunity(telegramUser, communityCode)
+    fun communityReply(): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val communityList = persistenceFacade.getCommunities()
+            val userCommunity = try {
+                persistenceFacade.getUser(upd.message.from).community }
+            catch (e: UserWithoutCommunityException) { null }
 
-                silent.send("Твоё новое комьюнити: ${data.community?.name}", it.chatId())
+            val text = "На данный момент ты часть комьюнити " + (userCommunity?.name ?: "бомжей") +
+                    " выбери себе комьюнити из меню"
+
+            val keyboard = ReplyKeyboardMarkup()
+            val rows = arrayListOf<KeyboardRow>()
+            var row = KeyboardRow()
+
+            communityList.forEachIndexed { index, community ->
+                val icon = if (userCommunity?.label.equals(community.label, ignoreCase = true)) EmojiCmd.CONFIRM_COMMUNITY
+                else EmojiCmd.SWITCH_COMMUNITY
+
+                row.add("$icon ${community.label} (${community.name})")
+
+                if (index % 2 != 0 || index == communityList.size - 1) {
+                    rows.add(row)
+                    row = KeyboardRow()
+                }
             }
-            .post { updateUserState(it.user().id, UserState.START) }
-            .build()
+
+            rows.add(KeyboardRow().also { it.add("${EmojiCmd.HOME} Домой") })
+
+            keyboard.keyboard = rows
+            keyboard.resizeKeyboard = true
+
+            val message = SendMessage()
+            message.replyMarkup = keyboard
+            message.chatId = upd.message.chatId.toString()
+            message.text = text
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.COMMUNITY))
+    }
+
+    fun switchCommunity (): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val communityCode = upd.message.text.split(" ").filter { it.isNotEmpty() }[1]
+            val telegramUser = upd.message.from
+
+            val data = persistenceFacade.switchUserCommunity(telegramUser, communityCode)
+
+            val text = "Твой новый комьюнити: ${data.community?.name}"
+
+            val message = mainMenuMessage(telegramUser, text)
+            bot.execute(message)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.SWITCH_COMMUNITY))
+    }
+
+    fun startsWith(flag: String): (Update) -> Boolean {
+        return {
+                upd: Update -> upd.message?.text?.startsWith("$flag ") ?: false
+        }
+    }
+
+    private fun mainMenuMessage (user: User, text: String = "Главное меню") : SendMessage {
+        val message = SendMessage()
+
+        val keyboard = ReplyKeyboardMarkup()
+
+        val row1 = KeyboardRow().also {
+            it.add("${EmojiCmd.CONTEST} Current Contest")
+            it.add("${EmojiCmd.SUBMISSION} My submission")
+        }
+
+        val row2 =  KeyboardRow().also {
+            it.add("${EmojiCmd.COMMUNITY} My community")
+        }
+
+        keyboard.keyboard = arrayListOf(row1, row2)
+
+        message.replyMarkup = keyboard
+        message.chatId = user.id.toString()
+        message.text = text
+        return message
     }
 
     fun code () : Ability {
