@@ -15,4 +15,7 @@ class WarcomUser: AbstractIntEntity() {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id")
     var community: Community? = null
+
+    @Column(name = "is_admin")
+    var isAdmin: Boolean = false
 }

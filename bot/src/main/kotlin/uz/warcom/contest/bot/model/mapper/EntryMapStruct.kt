@@ -18,5 +18,9 @@ interface EntryMapStruct {
 
     fun toImageData (entity: Image): ImageData
 
+    @Mapping(source = "draft", target = "draft")
     fun toContestData (entity: Contest): ContestData
+
+    @Mapping(source = "draft", target = "draft")
+    fun toContest (contestData: ContestData): Contest
 }

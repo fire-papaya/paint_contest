@@ -1,4 +1,4 @@
-package uz.warcom.contest.bot.model.enum
+package uz.warcom.contest.bot.model.enums
 
 class Commands {
     companion object {
@@ -14,5 +14,7 @@ class Commands {
         const val ENTRIES = "entries"
         const val ENTRY = "entry"
         const val CROPPED = "cropped"
+        const val CREATE_CONTEST = "create"
+        const val UPDATE_CONTEST = "update"
     }
 }

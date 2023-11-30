@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "uz.warcom.contest"
-version = "0.3.0"
+version = "0.4.0"
 java.sourceCompatibility = JavaVersion.VERSION_11
 val mapstructVersion = "1.5.0.RC1"
 
@@ -30,7 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation ("org.telegram:telegrambots-abilities:5.7.1")
+    implementation ("org.telegram:telegrambots-abilities:6.8.0")
     implementation(project(":persistence"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
