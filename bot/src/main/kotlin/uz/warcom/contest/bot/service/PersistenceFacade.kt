@@ -94,22 +94,20 @@ class PersistenceFacade
         return entryMapStruct.toContestData(contest)
     }
 
-    fun getCurrentDraftContest (communityCode: String): ContestData? {
+    fun getCurrentDraftContest (communityCode: String): Contest? {
         val community = communityService.getCommunity(communityCode) ?: throw CommunityNotFoundException()
 
         return contestService.communityDraftContest(community)
-            ?.let { entryMapStruct.toContestData(it) }
     }
 
-    fun saveContest(contest: Contest): ContestData {
-        return entryMapStruct.toContestData(contestService.saveContest(contest))
+    fun saveContest(contest: Contest): Contest {
+        return contestService.saveContest(contest)
     }
 
-    fun saveContest(contestData: ContestData): ContestData {
+    fun saveContest(contestData: ContestData): Contest {
         val contest = entryMapStruct.toContest(contestData)
-        val saved =contestService.saveContest(contest)
 
-        return entryMapStruct.toContestData(saved)
+        return contestService.saveContest(contest)
     }
 
     fun checkUser (telegramUser: User): WarcomUser {

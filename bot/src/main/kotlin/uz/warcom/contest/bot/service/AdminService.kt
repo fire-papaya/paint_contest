@@ -38,7 +38,7 @@ class AdminService(
         return persistenceFacade.getEntryImagesInfo(entryId)
     }
 
-    fun currentDraftContest(telegramUser: User): ContestData {
+    fun currentDraftContest(telegramUser: User): Contest {
         val adminCommunities = persistenceFacade.fetchAdminCommunities(telegramUser)
             .associateBy { it.label }
 
@@ -50,7 +50,7 @@ class AdminService(
         return persistenceFacade.getCurrentDraftContest(communityCode) ?: throw DraftContestNotCreated()
     }
 
-    fun createContest(telegramUser: User): ContestData {
+    fun createContest(telegramUser: User): Contest {
         val adminCommunities = persistenceFacade.fetchAdminCommunities(telegramUser)
             .associateBy { it.label }
 
@@ -76,7 +76,7 @@ class AdminService(
         }
     }
 
-    fun updateCurrentDraftContest(telegramUser: User, updateData: ContestData): ContestData {
+    fun updateCurrentDraftContest(telegramUser: User, updateData: ContestData): Contest {
         val currentDraft = currentDraftContest(telegramUser)
 
         if (updateData.name.isNotEmpty())
