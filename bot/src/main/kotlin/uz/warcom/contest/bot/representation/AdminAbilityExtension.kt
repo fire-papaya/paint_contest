@@ -19,7 +19,6 @@ import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.util.DateHelper
 import uz.warcom.contest.bot.util.PredicateBuilder.notCommand
-import uz.warcom.contest.bot.util.PredicateBuilder.notStartsWith
 import uz.warcom.contest.bot.util.PredicateBuilder.startsWith
 import java.util.function.Predicate
 
@@ -91,7 +90,8 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, startsWith(EmojiCmd.CREATE_CONTEST))
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+            .and(startsWith(EmojiCmd.CREATE_CONTEST)))
     }
 
     fun updateContestName() : Reply {
@@ -105,7 +105,8 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, startsWith(EmojiCmd.UPDATE_NAME))
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+            .and(startsWith(EmojiCmd.UPDATE_NAME)))
     }
 
     fun updateContestDescription() : Reply {
@@ -119,7 +120,8 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, startsWith(EmojiCmd.UPDATE_DESCRIPTION))
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+            .and(startsWith(EmojiCmd.UPDATE_DESCRIPTION)))
     }
 
     fun updateContestDates() : Reply {
@@ -134,7 +136,38 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, startsWith(EmojiCmd.UPDATE_DATES))
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+            .and(startsWith(EmojiCmd.UPDATE_DATES)))
+    }
+
+    fun submitContest() : Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            updateUserState(user, UserState.START)
+            val contest = adminService.submitContest(user)
+
+            val message = mainMenuMessage(user, "Конкурс опубликован: \n" + contest.toMessage())
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+                .and(startsWith(EmojiCmd.SUBMIT_CONTEST)))
+    }
+
+    fun previewDraftContest(): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            updateUserState(user, UserState.START)
+            val contest = adminService.draftContestData(user)
+
+            val message = contestMenuMessage(user, "Превью: \n" + contest.toMessage())
+
+            bot.execute(message)
+        }
+
+        return Reply.of(action, Predicate<Update> { bot.isAdmin(it.message.from.id) }
+                .and(startsWith(EmojiCmd.PREVIEW_CONTEST)))
     }
 
     fun processAdminText(): Reply {
@@ -192,7 +225,7 @@ class AdminAbilityExtension (
         val keyboard = ReplyKeyboardMarkup()
 
         val row1 = KeyboardRow().also {
-            it.add(ButtonLabel.DRAFT_CONTEST)
+            it.add(ButtonLabel.PREVIEW_CONTEST)
             it.add(ButtonLabel.UPDATE_NAME)
         }
 
@@ -215,6 +248,29 @@ class AdminAbilityExtension (
         return message
     }
 
+    private fun mainMenuMessage (user: User, text: String = "Главное меню") : SendMessage {
+        val message = SendMessage()
+
+        val keyboard = ReplyKeyboardMarkup()
+
+        val row1 = KeyboardRow().also {
+            it.add(ButtonLabel.CONTEST)
+            it.add(ButtonLabel.SUBMISSION)
+        }
+
+        val row2 =  KeyboardRow().also {
+            it.add(ButtonLabel.COMMUNITY)
+            it.add(ButtonLabel.CREATE_CONTEST)
+        }
+
+        keyboard.keyboard = arrayListOf(row1, row2)
+        keyboard.resizeKeyboard = true
+
+        message.replyMarkup = keyboard
+        message.chatId = user.id.toString()
+        message.text = text
+        return message
+    }
 
     private fun updateUserState (userId: Long, state: UserState) {
         db.getMap<String, Any>("USER_STATES").entries.forEach{ ent -> println("${ent.key} : ${ent.value}") }

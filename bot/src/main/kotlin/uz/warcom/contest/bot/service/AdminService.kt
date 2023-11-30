@@ -6,6 +6,7 @@ import uz.warcom.contest.bot.model.ContestData
 import uz.warcom.contest.bot.model.EntriesSummary
 import uz.warcom.contest.bot.model.EntrySummary
 import uz.warcom.contest.bot.model.ImageData
+import uz.warcom.contest.bot.model.mapper.EntryMapStruct
 import uz.warcom.contest.persistence.domain.Contest
 import uz.warcom.contest.persistence.exception.DraftContestNotCreated
 import uz.warcom.contest.persistence.exception.NotCommunityAdminException
@@ -14,7 +15,8 @@ import kotlin.random.Random
 
 @Service
 class AdminService(
-    private val persistenceFacade: PersistenceFacade
+    private val persistenceFacade: PersistenceFacade,
+    private val entryMapStruct: EntryMapStruct
 ){
     fun getEntriesSummary (communityCode: String): EntriesSummary {
         val entriesData = persistenceFacade.getEntries(communityCode)
@@ -91,6 +93,21 @@ class AdminService(
         }
 
         return persistenceFacade.saveContest(currentDraft)
+    }
+
+    fun submitContest(telegramUser: User): ContestData {
+        val currentDraft = currentDraftContest(telegramUser)
+
+        currentDraft.draft = false
+
+        val saved = persistenceFacade.saveContest(currentDraft)
+        return entryMapStruct.toContestData(saved)
+    }
+
+    fun draftContestData(telegramUser: User): ContestData {
+        val currentDraft = currentDraftContest(telegramUser)
+
+        return entryMapStruct.toContestData(currentDraft)
     }
 
 }

@@ -16,7 +16,7 @@ enum class EmojiCmd(val code: String) {
     ENTRY("entry"),
 
     CREATE_CONTEST("\uD83D\uDEE0\uFE0F"),
-    DRAFT_CONTEST("\uD83D\uDCDC"),
+    PREVIEW_CONTEST("\uD83D\uDCDC"),
     UPDATE_NAME("\uD83D\uDD8A\uFE0F"),
     UPDATE_DESCRIPTION("\uD83D\uDCF0"),
     UPDATE_DATES("\uD83D\uDCC6"),
