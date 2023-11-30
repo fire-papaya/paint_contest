@@ -15,8 +15,12 @@ class EmojiCmd {
         // Admin commands
         const val ENTRIES = "entries"
         const val ENTRY = "entry"
-        const val CROPPED = "cropped"
-        const val CREATE_CONTEST = "create"
-        const val UPDATE_CONTEST = "update"
+        // Admin contest-related commands
+        const val CREATE_CONTEST = "\uD83D\uDEE0\uFE0F"
+        const val DRAFT_CONTEST = "\uD83D\uDCDC"
+        const val UPDATE_NAME = "\uD83D\uDD8A\uFE0F"
+        const val UPDATE_DESCRIPTION = "\uD83D\uDCF0"
+        const val UPDATE_DATES = "\uD83D\uDCC6"
+        const val SUBMIT_CONTEST = "✅"
     }
 }

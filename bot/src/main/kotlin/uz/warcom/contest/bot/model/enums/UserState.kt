@@ -6,8 +6,8 @@ enum class UserState {
     PRIMED,
     PAINTED,
 
-    CREATE_CONTEST,
-    NAME_SENT,
-    DESCRIPTION_SENT,
-    DATE_SENT
+    SET_NAME,
+    SET_DESCRIPTION,
+    SET_DATES,
+    FILLED
 }

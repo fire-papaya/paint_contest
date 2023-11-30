@@ -14,7 +14,10 @@ object ButtonLabel {
     // Admin commands
     const val ENTRIES = "entries"
     const val ENTRY = "entry"
-    const val CROPPED = "cropped"
-    const val CREATE_CONTEST = "create"
-    const val UPDATE_CONTEST = "update"
+    const val CREATE_CONTEST = "${EmojiCmd.CREATE_CONTEST} Создать конкурс"
+    const val DRAFT_CONTEST = "${EmojiCmd.DRAFT_CONTEST} Предпросмотр"
+    const val UPDATE_NAME = "${EmojiCmd.UPDATE_NAME} Редактировать имя"
+    const val UPDATE_DESCRIPTION = "${EmojiCmd.UPDATE_NAME} Редактировать описание"
+    const val UPDATE_DATES = "${EmojiCmd.UPDATE_NAME} Редактировать даты проведения"
+    const val SUBMIT_CONTEST = "${EmojiCmd.SUBMIT_CONTEST} Подтвердить создание"
 }
