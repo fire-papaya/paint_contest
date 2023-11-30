@@ -10,6 +10,7 @@ data class ContestData(
     var startDate: LocalDateTime = LocalDateTime.MIN,
     var endDate: LocalDateTime = LocalDateTime.MIN,
     var communityData: CommunityData? = null,
+    var isDraft: Boolean = true
 ) {
     fun toMessage (): String {
         return "Конкурс: $name \n" +
