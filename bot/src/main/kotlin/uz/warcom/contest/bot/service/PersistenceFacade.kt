@@ -101,8 +101,15 @@ class PersistenceFacade
             ?.let { entryMapStruct.toContestData(it) }
     }
 
-    fun createContest(contest: Contest): ContestData {
-        return entryMapStruct.toContestData(contestService.createContest(contest))
+    fun saveContest(contest: Contest): ContestData {
+        return entryMapStruct.toContestData(contestService.saveContest(contest))
+    }
+
+    fun saveContest(contestData: ContestData): ContestData {
+        val contest = entryMapStruct.toContest(contestData)
+        val saved =contestService.saveContest(contest)
+
+        return entryMapStruct.toContestData(saved)
     }
 
     fun checkUser (telegramUser: User): WarcomUser {

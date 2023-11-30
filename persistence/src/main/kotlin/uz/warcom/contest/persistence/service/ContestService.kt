@@ -24,7 +24,7 @@ constructor(
         return contestRepository.findFirstByCommunityOrderByIdDesc(community)
     }
 
-    fun createContest(contest: Contest): Contest {
+    fun saveContest(contest: Contest): Contest {
         return contestRepository.save(contest)
     }
 

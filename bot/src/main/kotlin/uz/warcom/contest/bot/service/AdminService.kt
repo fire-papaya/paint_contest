@@ -38,36 +38,59 @@ class AdminService(
         return persistenceFacade.getEntryImagesInfo(entryId)
     }
 
-    fun currentDraftContest(telegramUser: User, communityCode: String): ContestData {
-        persistenceFacade.checkAdmin(telegramUser)
+    fun currentDraftContest(telegramUser: User): ContestData {
+        val adminCommunities = persistenceFacade.fetchAdminCommunities(telegramUser)
+            .associateBy { it.label }
+
+        val communityCode = persistenceFacade.checkUser(telegramUser).community!!.label
+
+        if (!adminCommunities.containsKey(communityCode))
+            throw NotCommunityAdminException()
 
         return persistenceFacade.getCurrentDraftContest(communityCode) ?: throw DraftContestNotCreated()
     }
 
-    fun createContest(telegramUser: User, communityCode: String): ContestData {
+    fun createContest(telegramUser: User): ContestData {
         val adminCommunities = persistenceFacade.fetchAdminCommunities(telegramUser)
             .associateBy { it.label }
+
+        val communityCode = persistenceFacade.checkUser(telegramUser).community!!.label
 
         if (!adminCommunities.containsKey(communityCode))
             throw NotCommunityAdminException()
 
         val existingDraft = persistenceFacade.getCurrentDraftContest(communityCode)
-            ?.let { cd -> Contest().also { it.id = cd.id } }
 
-        val draft = (existingDraft ?: Contest()).apply {
-            this.community = adminCommunities[communityCode]
-            this.name = "placeholder"
-            this.description = "placeholder"
-            this.startDate = LocalDateTime.now()
-            this.endDate = LocalDateTime.now()
-            this.draft = true
+        return if (existingDraft != null) existingDraft
+        else {
+            val draft = Contest().apply {
+                this.community = adminCommunities[communityCode]
+                this.name = "placeholder"
+                this.description = "placeholder"
+                this.startDate = LocalDateTime.now()
+                this.endDate = LocalDateTime.now()
+                this.draft = true
+            }
+
+            persistenceFacade.saveContest(draft)
         }
-
-        return persistenceFacade.createContest(draft)
     }
 
-    fun updateCurrentDraftContest(telegramUser: User, communityCode: String): ContestData {
-        TODO()
+    fun updateCurrentDraftContest(telegramUser: User, updateData: ContestData): ContestData {
+        val currentDraft = currentDraftContest(telegramUser)
+
+        if (updateData.name.isNotEmpty())
+            currentDraft.name = updateData.name
+
+        if (updateData.description.isNotEmpty())
+            currentDraft.description = updateData.description
+
+        if (updateData.startDate != LocalDateTime.MIN && updateData.endDate != LocalDateTime.MIN) {
+            currentDraft.startDate = updateData.startDate
+            currentDraft.endDate = updateData.endDate
+        }
+
+        return persistenceFacade.saveContest(currentDraft)
     }
 
 }
