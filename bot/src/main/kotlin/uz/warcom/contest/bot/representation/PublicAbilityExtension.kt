@@ -18,6 +18,7 @@ import uz.warcom.contest.bot.model.enums.Commands
 import uz.warcom.contest.bot.model.enums.EmojiCmd
 import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.PersistenceFacade
+import uz.warcom.contest.bot.util.PredicateBuilder.startsWith
 import uz.warcom.contest.persistence.exception.*
 
 
@@ -271,12 +272,6 @@ class PublicAbilityExtension (
         }
 
         return Reply.of(action, startsWith(EmojiCmd.HOME))
-    }
-
-    fun startsWith(flag: String): (Update) -> Boolean {
-        return {
-                upd: Update -> upd.message?.text?.startsWith("$flag ") ?: false
-        }
     }
 
     private fun mainMenuMessage (user: User, text: String = "Главное меню") : SendMessage {
