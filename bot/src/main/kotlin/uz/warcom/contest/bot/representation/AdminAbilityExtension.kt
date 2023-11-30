@@ -18,8 +18,10 @@ import uz.warcom.contest.bot.model.enums.EmojiCmd
 import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.AdminService
 import uz.warcom.contest.bot.util.DateHelper
+import uz.warcom.contest.bot.util.PredicateBuilder.notCommand
 import uz.warcom.contest.bot.util.PredicateBuilder.notStartsWith
 import uz.warcom.contest.bot.util.PredicateBuilder.startsWith
+import java.util.function.Predicate
 
 class AdminAbilityExtension (
     private val bot: AbilityBot,
@@ -117,7 +119,7 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, startsWith(EmojiCmd.UPDATE_NAME))
+        return Reply.of(action, startsWith(EmojiCmd.UPDATE_DESCRIPTION))
     }
 
     fun updateContestDates() : Reply {
@@ -138,6 +140,7 @@ class AdminAbilityExtension (
     fun processAdminText(): Reply {
         val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
             val user = extractUser(upd)
+
             val state = userState(upd)
             val text = upd.message.text
             val replyText = when(state) {
@@ -176,7 +179,11 @@ class AdminAbilityExtension (
             bot.execute(message)
         }
 
-        return Reply.of(action, Flag.TEXT.and(notStartsWith("/")).and { userState(it) in creationStates })
+        return Reply.of(action,
+            Predicate<Update>(notCommand())
+                .and { bot.isAdmin(it.message.from.id) }
+                .and { userState(it) in creationStates }
+                .and(Flag.TEXT))
     }
 
     private fun contestMenuMessage(user: User, text: String): SendMessage {
