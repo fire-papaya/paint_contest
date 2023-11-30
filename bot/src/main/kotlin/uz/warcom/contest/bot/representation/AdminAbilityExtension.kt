@@ -11,11 +11,14 @@ import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import uz.warcom.contest.bot.model.ContestData
 import uz.warcom.contest.bot.model.enums.ButtonLabel
 import uz.warcom.contest.bot.model.enums.Commands
 import uz.warcom.contest.bot.model.enums.EmojiCmd
 import uz.warcom.contest.bot.model.enums.UserState
 import uz.warcom.contest.bot.service.AdminService
+import uz.warcom.contest.bot.util.DateHelper
+import uz.warcom.contest.bot.util.PredicateBuilder.notStartsWith
 import uz.warcom.contest.bot.util.PredicateBuilder.startsWith
 
 class AdminAbilityExtension (
@@ -24,6 +27,7 @@ class AdminAbilityExtension (
 ): AbilityExtension {
     private val silent = bot.silent()
     private val db = bot.db()
+    private val creationStates = setOf(UserState.SET_NAME, UserState.SET_DESCRIPTION, UserState.SET_DATES, UserState.FILLED)
 
     fun entries () : Ability {
         return Ability
@@ -94,7 +98,7 @@ class AdminAbilityExtension (
             updateUserState(user, UserState.SET_NAME)
             adminService.currentDraftContest(user)
 
-            val message = contestMenuMessage(user, "Отправь название конкурса")
+            val message = contestMenuMessage(user, "Отправь название конкурса (макс. 100 символов)")
 
             bot.execute(message)
         }
@@ -108,7 +112,7 @@ class AdminAbilityExtension (
             updateUserState(user, UserState.SET_DESCRIPTION)
             adminService.currentDraftContest(user)
 
-            val message = contestMenuMessage(user, "Отправь название конкурса")
+            val message = contestMenuMessage(user, "Отправь описание конкурса (макс. 500 символов)")
 
             bot.execute(message)
         }
@@ -129,6 +133,50 @@ class AdminAbilityExtension (
         }
 
         return Reply.of(action, startsWith(EmojiCmd.UPDATE_DATES))
+    }
+
+    fun processAdminText(): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            val state = userState(upd)
+            val text = upd.message.text
+            val replyText = when(state) {
+                UserState.SET_NAME -> {
+                    adminService.updateCurrentDraftContest(user, ContestData(name = text))
+                    updateUserState(user, UserState.SET_DESCRIPTION)
+                    "Название принято. Отправь описание конкурса (макс. 500 символов)"
+                }
+                UserState.SET_DESCRIPTION -> {
+                    adminService.updateCurrentDraftContest(user, ContestData(description = text))
+                    updateUserState(user, UserState.SET_DATES)
+                    "Описание принято. Отправь даты проведения конкурса в формате `DDMMYY DDMMYY`" +
+                            ", пример: `010224 310324` (1 фев 2024 - 31 мар 2024)"
+                }
+                UserState.SET_DATES -> {
+                    val dates = text.split(" ")
+                    if (dates.size != 2)
+                        "Отправь две даты, разделенные пробелом"
+                    else {
+                        val start = DateHelper.parse(dates[0]).atStartOfDay()
+                        val end = DateHelper.parse(dates[1]).atStartOfDay().plusDays(1).minusMinutes(1)
+
+                        if (end.isBefore(start))
+                            "Конец конкурса должен быть после начала"
+                        else {
+                            adminService.updateCurrentDraftContest(user, ContestData(startDate = start, endDate = end))
+                            updateUserState(user, UserState.FILLED)
+                            "Конкурс готов к публикации"
+                        }
+                    }
+                }
+                else -> { "Создание конкурса" }
+            }
+
+            val message = contestMenuMessage(user, replyText)
+            bot.execute(message)
+        }
+
+        return Reply.of(action, Flag.TEXT.and(notStartsWith("/")).and { userState(it) in creationStates })
     }
 
     private fun contestMenuMessage(user: User, text: String): SendMessage {

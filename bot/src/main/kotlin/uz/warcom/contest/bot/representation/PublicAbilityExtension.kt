@@ -284,8 +284,11 @@ class PublicAbilityExtension (
             it.add(ButtonLabel.SUBMISSION)
         }
 
+        val isAdmin = persistenceFacade.checkUser(user).isAdmin
+
         val row2 =  KeyboardRow().also {
             it.add(ButtonLabel.COMMUNITY)
+            if (isAdmin) it.add(ButtonLabel.CREATE_CONTEST)
         }
 
         keyboard.keyboard = arrayListOf(row1, row2)
