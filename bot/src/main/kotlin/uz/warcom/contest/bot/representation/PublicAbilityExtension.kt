@@ -27,7 +27,7 @@ class PublicAbilityExtension (
 ): AbilityExtension {
     private val silent = bot.silent()
     private val db = bot.db()
-    private val contestStates = setOf(UserState.PRIMED, UserState.PAINTED)
+    private val contestStates = setOf(UserState.CODE, UserState.PRIMED, UserState.PAINTED)
 
     fun start () : Ability {
         return Ability
@@ -114,8 +114,12 @@ class PublicAbilityExtension (
                 val entry = persistenceFacade.checkEntry(user)
 
                 updateUserState(user.id, UserState.CODE)
-                val text = "Твой код: ${entry.code}, Отправь изображение собранной и/или загрунтованной миниатюры с " +
-                        "кодом  для продолжения процесса подачи заявки на конкурс"
+                val text = if (entry.images.size > 0) {
+                    "Твой код: ${entry.code}. Используй этот код для подачи своей работы"
+                } else {
+                    "Твой код: ${entry.code}, Отправь изображение собранной и/или загрунтованной миниатюры с " +
+                            "кодом  для продолжения процесса подачи заявки на конкурс"
+                }
                 entryMenuMessage(user, text)
             } catch (e: ContestNotFoundException) {
                 mainMenuMessage(user, "На данный момент нет активных конкурсов, загляни позже")
@@ -188,15 +192,17 @@ class PublicAbilityExtension (
                 ImageToSave(user, state == UserState.PRIMED, photo.fileId)
             )
 
-            val text = if (state == UserState.CODE) {
+            var text = if (state == UserState.CODE) {
                 updateUserState(user.id, UserState.PRIMED)
                 "Изображение получено. Отправь три изображения покрашенной миниатюры, когда закончишь покрас"
             } else {
-                "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3. Заявка готова и подана"
+                "Изображение получено: ${entry.images.filter { img -> img.isReady }.size}/3."
             }
 
-            if (entry.images.filter { img -> img.isReady }.size == 3)
+            if (entry.images.filter { img -> img.isReady }.size == 3) {
                 updateUserState(user.id, UserState.PAINTED)
+                text += " Заявка готова и подана"
+            }
 
             val message = entryMenuMessage(user, text)
 
@@ -252,6 +258,19 @@ class PublicAbilityExtension (
         }
 
         return Reply.of(action, startsWith(EmojiCmd.CONTEST))
+    }
+
+    fun home(): Reply {
+        val action: (BaseAbilityBot, Update) -> Unit = { _, upd ->
+            val user = extractUser(upd)
+            updateUserState(user.id, UserState.START)
+
+            val sendMessage = mainMenuMessage(user, "Главное меню")
+
+            bot.execute(sendMessage)
+        }
+
+        return Reply.of(action, startsWith(EmojiCmd.HOME))
     }
 
     fun startsWith(flag: String): (Update) -> Boolean {
