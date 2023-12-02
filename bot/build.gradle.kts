@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "uz.warcom.contest"
-version = "0.4.0"
+version = "0.4.1"
 java.sourceCompatibility = JavaVersion.VERSION_11
 val mapstructVersion = "1.5.0.RC1"
 

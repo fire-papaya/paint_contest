@@ -284,7 +284,11 @@ class PublicAbilityExtension (
             it.add(ButtonLabel.SUBMISSION)
         }
 
-        val isAdmin = persistenceFacade.checkUser(user).isAdmin
+        val isAdmin = try {
+            persistenceFacade.checkUser(user).isAdmin
+        } catch (e: UserWithoutCommunityException) {
+            false
+        }
 
         val row2 =  KeyboardRow().also {
             it.add(ButtonLabel.COMMUNITY)
