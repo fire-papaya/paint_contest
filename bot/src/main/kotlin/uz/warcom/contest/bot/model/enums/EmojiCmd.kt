@@ -5,7 +5,7 @@ enum class EmojiCmd(val code: String) {
     SUBMISSION("\uD83D\uDDBC\uFE0F"),
     CONTEST("\uD83D\uDE80"),
     CODE("\uD83C\uDFB0"),
-    PRIMED("\uD83C\uDFA8"),
+    PRIMED("✏\uFE0F"),
     PAINTED("\uD83C\uDFA8"),
     COMMUNITY("\uD83C\uDF07"),
     SWITCH_COMMUNITY("\uD83C\uDFD9\uFE0F"),

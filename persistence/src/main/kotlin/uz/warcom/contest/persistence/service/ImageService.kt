@@ -42,7 +42,7 @@ class ImageService (
     fun getEntryImages (entry: Entry): List<Image> {
         val images = imageRepository.findAllByEntryOrderByDateCreatedDesc(entry)
 
-        val primed = images.lastOrNull { !it.isReady } ?: throw NoPrimedImageException()
+        val primed = images.firstOrNull { !it.isReady } ?: throw NoPrimedImageException()
 
         val painted = images.filter { it.isReady }.take(3).takeIf { it.size == 3 }?.toMutableList()
             ?: throw NoPaintedImageException()
