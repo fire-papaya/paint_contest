@@ -5,11 +5,12 @@ services:
     image: ghcr.io/fire-papaya/paint_contest:latest
     volumes:
       - /home/knight/config/application-stage.yml:/opt/app/application-stage.yml
+      - /home/knight/config/wh_painting_bot:/opt/app/wh_painting_bot
     depends_on:
-      - db
+      - mariadb
     links:
-      - db:db
-  db:
+      - mariadb:db
+  mariadb:
     image: bitnami/mariadb:10.5.12
     volumes:
       - /home/knight/db_data:/bitnami/mariadb/data
