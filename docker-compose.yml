@@ -6,9 +6,9 @@ services:
     volumes:
       - /home/knight/config/application-stage.yml:/opt/app/application-stage.yml
     depends_on:
-      - contest_db
+      - db
     links:
-      - contest_db:db
+      - db:db
   db:
     image: bitnami/mariadb:10.5.12
     volumes:
