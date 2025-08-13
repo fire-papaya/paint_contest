@@ -1,0 +1,54 @@
+name: Build bot image
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.4.1
+
+      - name: Run build with Gradle wrapper
+        id: gradle
+        run: ./gradlew clean bootJar
+
+      - name: List bot jar
+        run: ls bot/build/libs
+
+      - name: Docker Login
+        uses: docker/login-action@v3.5.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

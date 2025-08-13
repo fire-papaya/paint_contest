@@ -1,0 +1,21 @@
+version: '3.1'
+
+services:
+  bot:
+    image: ghcr.io/fire-papaya/paint_contest:latest
+    volumes:
+      - /home/knight/config/application-stage.yml:/opt/app/application-stage.yml
+    depends_on:
+      - contest_db
+    links:
+      - contest_db:db
+  db:
+    image: bitnami/mariadb:10.5.12
+    volumes:
+      - /home/knight/db_data:/bitnami/mariadb/data
+    environment:
+      - MARIADB_AUTHENTICATION_PLUGIN=mysql_native_password
+      - MARIADB_DATABASE=paint_contest
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_SKIP_TEST_DB=yes
+      - MARIADB_PORT_NUMBER=3310
