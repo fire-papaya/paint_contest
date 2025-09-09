@@ -1,7 +1,7 @@
 # Paint Contest Bot
-!\[Java version\](https://badgen.net/badge/java/11/blue)
-!\[Gradle version\](https://badgen.net/badge/gradle/7.4.1/blue)
-!\[PRs welcome badge\](https://badgen.net/badge/PRs/welcome/green)
+![Java version](https://badgen.net/badge/java/11/blue)
+![Gradle version](https://badgen.net/badge/gradle/7.4.1/blue)
+![PRs welcome badge](https://badgen.net/badge/PRs/welcome/green)
 
 Telegram bot for painting competitions organized by Warhammer Community of Uzbekistan. Based on [AbilityBot](https://github.com/addo47/AbilityBots)
 
